@@ -1,7 +1,7 @@
 clc; clear; close all;
 startPt = [0,0,0];
 target = [10,10,10];
-obstacles= [[2,1,3];[5,5,5]];
+obstacles= [[2,1,3];[5,5,4];[8,9,5]];
 obsDrones = [];
 drone = Drone(1,startPt,[0,0,0],[0,0,0]);
 for i = 1:size(obstacles)
@@ -11,12 +11,12 @@ end
 apf = APF(obsDrones,startPt,target);
 
 
-waypoints = [[0,0,0]];
+waypoints = [0,0,0];
 steps = 0;
 
 
-%while steps < 100
-while ~all(abs(drone.position(:)-target(:))<=[0.00001,0.00001,0.00001])
+while steps < 100
+%while ~all(abs(drone.position(:)-target(:))<=[0.00001,0.00001,0.00001])
     a = abs(drone.position(:)-target(:));
     [drone.position, drone.velocity] = apf.getNextStep(drone);
     waypoints = [waypoints; drone.position];

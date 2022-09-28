@@ -11,6 +11,8 @@ classdef Drone
     vMax = 19;
     accMax = 14;
 
+    distMoved;
+
     %   State Info
     velocity;
     acceleration;
@@ -33,6 +35,7 @@ classdef Drone
            self.velocity = initV;
            self.acceleration = initA;
            self.position = position;
+           self.distMoved = 0;
        end
 
    end
