@@ -9,7 +9,7 @@ classdef Drone
     climbAngleMax;
     subAngleMax;
     vMax = 19;
-    accMax = 6;
+    accMax = 14;
 
     %   State Info
     velocity;
