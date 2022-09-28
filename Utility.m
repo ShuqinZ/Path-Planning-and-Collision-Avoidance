@@ -33,6 +33,60 @@ classdef Utility
             dis = vec1 .* vec2 / (norm(vec1) * norm(vec2));
         end
 
+        function coordinates = loadPtCld(filename)
+
+            dimRow=true;
+            
+            rowCount = 1;
+            
+            vertexCount = [];
+            
+            fileID=fopen(filename);
+            
+            coordinates = [];
+            
+            x=0;
+            y=0;
+            z=0;
+            
+            while (~feof(fileID))
+                currLine = textscan(fileID,'%s',1,'Delimiter','\n');
+                currRow = char(currLine{1});
+                splittedRow = strsplit(currRow,' ');
+            
+                if (~strcmp(splittedRow(1),'#') && ~strcmp(splittedRow(1),'OFF'))
+            
+                    splittedRow = str2double(splittedRow);
+            
+                    if(dimRow)
+                        dimRow = false;
+                        vertexCount = splittedRow(1);
+                    else
+                        if(rowCount <= vertexCount)
+                            %vertexList{rowCount} = [splittedRow(1)*multiplier splittedRow(2)*multiplier splittedRow(3)*multiplier];
+                            x = splittedRow(1);
+                            y = splittedRow(2);
+                            z = splittedRow(3);
+                            coordinates = [coordinates, [rowCount,x,y,z]];
+            
+                        end
+                        
+                        rowCount = rowCount +1;
+            
+                        % progress
+                        if(mod(rowCount,100)==0)
+                            disp('.');
+                        end
+                    end
+                end
+            end
+            
+            fclose(fileID); %Close the input file
+            
+            %plot3(X,Y,Z, ".")
+            disp("finished")
+            end
+
     end
 end
 
