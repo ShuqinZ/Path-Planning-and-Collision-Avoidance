@@ -29,6 +29,10 @@ classdef Utility
 
         end
 
+        function dis = getCos(self, vec1, vec2)
+            dis = vec1 .* vec2 / (norm(vec1) * norm(vec2));
+        end
+
     end
 end
 
