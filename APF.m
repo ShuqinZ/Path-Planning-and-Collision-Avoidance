@@ -38,13 +38,13 @@ classdef APF
             self.path = startPt;
        
             self.util = Utility();
-            self.fAttMax = self.util.distanceCost([0,0,0],self.attraction(startPt,target,self.attBound,self.epsilon));
+            self.fAttMax = norm(self.attraction(startPt,target,self.attBound,self.epsilon));
         end
 
 
         % Compute the attractive force
         function f_att = attraction(self,dronePos,target,distBound,epsilon)
-            dis = self.util.distanceCost(dronePos,target);
+            dis = norm(dronePos-target);
         
             %   To prevent attraction force grown too big when it's far from target
             %   Set an upper bound to the arraction force
@@ -66,7 +66,7 @@ classdef APF
         %   Calculate the total Velocity-Repulsive force
         function f_VRep = repulsion(self,drone,obstacles,affectDistance,etaR, etaV,target)
             f_VRep = [0, 0, 0];           %Initialize the force
-            distToTarget = self.util.distanceCost(drone.position,target);
+            distToTarget = norm(drone.position - target);
             n=2;    %n is an arbitrary real number which is greater than zero
         
             for i = 1 : size(obstacles,2)
@@ -75,38 +75,61 @@ classdef APF
                     continue;
                 end
 
-                distToObst = self.util.distanceCost(drone.position,obstacles(i).position);
+                distToObst = norm(drone.position-obstacles(i).position);
                 
                 %Drone is affecting by abstacle's repulsivefield
-                if distToObst <= affectDistance && self.util.distanceCost(drone.velocity, obstacles(i).velocity) > 0
+                if distToObst <= affectDistance && norm(drone.velocity - obstacles(i).velocity) > 0 ...
+                    %&& self.util.differantial(drone.velocity, obstacles(i).velocity),self.util.differantial(drone.position, obstacles(i).position) 
                     %   Calculate the repulsive force
-                    fRepByObst = etaR * (1/distToObst - 1/affectDistance) * distToTarget^n/distToObst^2 * self.util.differential(drone.position,obstacles(i).position)...
-                        + (n/2) * etaR * (1/distToObst - 1/affectDistance)^2 * distToTarget^(n-1) * self.util.differential(drone.position,target);
+                    a = self.util.differential(drone.position,obstacles(i).position);
+                    b = self.util.differential(drone.position,target);
+                    fRepByObst = etaR * (1/distToObst - 1/affectDistance) * distToTarget^n/distToObst^2 * -1 * self.util.differential(drone.position,obstacles(i).position)...
+                        + (n/2) * etaR * (1/distToObst - 1/affectDistance)^2 * distToTarget^(n-1) * -1 * self.util.differential(drone.position,target);
                     
                     %   Calculate the velocity repulsive force
-                    fVByObst = etaV * self.util.distanceCost(obstacles(i).velocity, drone.velocity) * self.util.differential(drone.position,obstacles(i).position);
+                    fVByObst = etaV * norm(obstacles(i).velocity - drone.velocity) * (obstacles(i).position - drone.position);
                     
-                    f_VRep = f_VRep + fRepByObst + fVByObst;
-                    fprintf('affect by %f, with rep of %f and Vrep of %f\n',obstacles(i).position, fRepByObst,fVByObst);
+                    f_VRep = f_VRep + fRepByObst ;%+ fVByObst;
+                    %fprintf('\naffect by [%d,%d,%d], with rep of [%f,%f,%f] and Vrep of [%f,%f,%f]\n',obstacles(i).position, fRepByObst,fVByObst);
                 end
-                fprintf('total force %f\n', f_VRep);
             end
+
         end
        
 
         %Calculate the next step for current drone
         %   Consider add up kinematicConstrant later
-        function [nextPos,changedV] = getNextStep(self,drone)
+        function [nextPos,actualV] = getNextStep(self,drone)
             force = self.getTotalForce(drone);
-            %nextPos = drone.position + 0.2 * force;
-            %changedV = 0.2/drone.timeUnit * force;
-
-            %nextPos = drone.position + drone.velocity * self.timeUnit + 0.5 * drone.accMax * force * self.timeUnit^2;
-            %changedV = drone.velocity + drone.accMax * force * self.timeUnit;
-
-            changedV = drone.vMax * force;
+            %   The maximum speed the drone can reach is corelated to force, but was constarined by vMAx
+            targetV = drone.vMax * force;
             
-            nextPos = drone.position + 0.5 * (changedV + drone.velocity) * self.timeUnit;
+            targetVValue = norm(targetV);
+            if targetVValue > drone.vMax
+                targetV = targetV * (drone.vMax/targetVValue);
+                targetVValue = drone.vMax;
+            end
+
+            a = norm(drone.velocity);
+            b = abs(targetVValue - norm(drone.velocity));
+
+            accTime = min(abs(targetVValue - norm(drone.velocity))/drone.accMax, self.timeUnit);
+
+            % check if the drone is speeding up or slowing down
+            if targetVValue < norm(drone.velocity)
+                flag = -1;
+            else
+                flag = 1;
+            end
+
+            actualVValue = norm(drone.velocity) + drone.accMax * accTime * flag;
+
+
+            actualV = (actualVValue/targetVValue) * targetV;
+
+                        
+            nextPos = drone.position + 0.5 * (actualV + drone.velocity) * accTime + actualV * (self.timeUnit-accTime);
+            fprintf('next Pos [%f,%f,%f] with speed %f \n', nextPos, actualVValue);
         end
             
         %   Calculate the total force of the field on the drone
@@ -117,9 +140,12 @@ classdef APF
 
             f_total = f_att + f_rep;
 
+
+            fprintf('total force [%f,%f,%f] \n', f_total);
             %f_total = self.util.getUnitVec(f_total);
 
             f_total = self.util.getNormalized(self.fAttMax, f_total);
+
         end
 
         function saveCSV(self,folder)

@@ -14,8 +14,9 @@ apf = APF(obsDrones,startPt,target);
 waypoints = [[0,0,0]];
 steps = 0;
 
-%while ~all(abs(drone.position(:)-target(:))<[0.1,0.1,0.1])
-while steps < 100
+
+while steps < 200
+%while ~all(abs(drone.position(:)-target(:))<=[0.1,0.1,0.1])
     a = abs(drone.position(:)-target(:));
     [drone.position, drone.velocity] = apf.getNextStep(drone);
     waypoints = [waypoints; drone.position];
