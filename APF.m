@@ -78,8 +78,8 @@ classdef APF
                 distToObst = norm(drone.position-obstacles(i).position);
                 
                 %Drone is affecting by abstacle's repulsivefield
-                if distToObst <= affectDistance && norm(drone.velocity - obstacles(i).velocity) > 0 ...
-                    %&& self.util.differantial(drone.velocity, obstacles(i).velocity),self.util.differantial(drone.position, obstacles(i).position) 
+                if distToObst <= affectDistance ...
+                    && self.util.getCos(norm(drone.velocity - obstacles(i).velocity), norm(drone.position - obstacles(i).position)) > 0
                     %   Calculate the repulsive force
                     a = self.util.differential(drone.position,obstacles(i).position);
                     b = self.util.differential(drone.position,target);
@@ -87,7 +87,7 @@ classdef APF
                         + (n/2) * etaR * (1/distToObst - 1/affectDistance)^2 * distToTarget^(n-1) * -1 * self.util.differential(drone.position,target);
                     
                     %   Calculate the velocity repulsive force
-                    fVByObst = etaV * norm(obstacles(i).velocity - drone.velocity) * (obstacles(i).position - drone.position);
+                    fVByObst = etaV * norm(obstacles(i).velocity - drone.velocity) * self.util.differential(obstacles(i).position, drone.position);
                     
                     f_VRep = f_VRep + fRepByObst ;%+ fVByObst;
                     %fprintf('\naffect by [%d,%d,%d], with rep of [%f,%f,%f] and Vrep of [%f,%f,%f]\n',obstacles(i).position, fRepByObst,fVByObst);
@@ -109,9 +109,6 @@ classdef APF
                 targetV = targetV * (drone.vMax/targetVValue);
                 targetVValue = drone.vMax;
             end
-
-            a = norm(drone.velocity);
-            b = abs(targetVValue - norm(drone.velocity));
 
             accTime = min(abs(targetVValue - norm(drone.velocity))/drone.accMax, self.timeUnit);
 
