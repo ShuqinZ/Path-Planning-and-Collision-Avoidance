@@ -17,11 +17,12 @@ classdef Drone
     velocity;
     acceleration;
     position;
+    target;
     
    end
 
    methods
-       function self=Drone(ID, position, initV, initA)
+       function self=Drone(ID, position, target, initV, initA)
            self.ID = ID;
 
            %   Velovity Restrict (use data frome Dji)
@@ -30,6 +31,8 @@ classdef Drone
            self.yawMax = 25/180 * pi * self.timeUnit;
            self.climbAngleMax = 35/180 * pi;
            self.subAngleMax = 35/180 * pi;
+
+           self.target = target;
         
            %   State Info
            self.velocity = initV;

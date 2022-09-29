@@ -15,7 +15,7 @@ classdef APF
         timeUnit = 1/25;
         stepsize = 0.2;
         attBound = 5;
-        repDist = 3;
+        repDist = 1;
         threshold = 0.2;
 
         %   Coefficients
