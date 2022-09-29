@@ -1,7 +1,7 @@
 clc; clear; close all;
 startPt = [0,0,0];
 target = [10,10,10];
-obstacles= [[2,1,3];[5,5,4];[8,9,5]];
+obstacles= [[8,8,7.9]];
 obsDrones = [];
 drone = Drone(1,startPt,[0,0,0],[0,0,0]);
 for i = 1:size(obstacles)
