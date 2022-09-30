@@ -33,7 +33,7 @@ classdef Utility
             dis = vec1 .* vec2 / (norm(vec1) * norm(vec2));
         end
 
-        function coordinates = loadPtCld(filename)
+        function coordinates = loadPtCld(self,filename)
 
             dimRow=true;
             
@@ -67,7 +67,7 @@ classdef Utility
                             x = splittedRow(1);
                             y = splittedRow(2);
                             z = splittedRow(3);
-                            coordinates = [coordinates, [rowCount,x,y,z]];
+                            coordinates = [coordinates; [rowCount,x,y,z]];
             
                         end
                         

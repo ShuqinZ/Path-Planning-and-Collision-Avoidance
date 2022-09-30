@@ -25,28 +25,26 @@ classdef MAPF
     methods
 
         function self = MAPF(drones)
-            self.drones = drones;
-            self.path = startPt;
-       
+            self.drones = drones;       
             self.util = Utility();
             %self.fAttMax = norm(self.attraction(startPt,target,self.attBound,self.epsilon));
         end
 
 
         % Compute the attractive force
-        function f_att = attraction(self,dronePos,target,distBound,epsilon)
-            dis = norm(dronePos-target);
+        function f_att = attraction(self,drone,distBound,epsilon)
+            dis = norm(drone.position-drone.target);
         
             %   To prevent attraction force grown too big when it's far from target
             %   Set an upper bound to the arraction force
             if dis <= distBound
-                fx = epsilon * (target(1) - dronePos(1));
-                fy = epsilon * (target(2) - dronePos(2));
-                fz = epsilon * (target(3) - dronePos(3));
+                fx = epsilon * (drone.target(1) - drone.position(1));
+                fy = epsilon * (drone.target(2) - drone.position(2));
+                fz = epsilon * (drone.target(3) - drone.position(3));
             else
-                fx = distBound * epsilon * (target(1) - dronePos(1)) / dis;
-                fy = distBound * epsilon * (target(2) - dronePos(2)) / dis;
-                fz = distBound * epsilon * (target(3) - dronePos(3)) / dis;
+                fx = distBound * epsilon * (drone.target(1) - drone.position(1)) / dis;
+                fy = distBound * epsilon * (drone.target(2) - drone.position(2)) / dis;
+                fz = distBound * epsilon * (drone.target(3) - drone.position(3)) / dis;
             end
         
             %   Return a the attraction force vector
@@ -55,14 +53,14 @@ classdef MAPF
 
 
         %   Calculate the total Velocity-Repulsive force
-        function f_VRep = repulsion(self,drone,obstacles,affectDistance,etaR, etaV,target)
+        function f_VRep = repulsion(self,drone,obstacles,affectDistance,etaR, etaV)
             f_VRep = [0, 0, 0];           %Initialize the force
-            distToTarget = norm(drone.position - target);
+            distToTarget = norm(drone.position - drone.target);
             n=2;    %n is an arbitrary real number which is greater than zero
         
             for i = 1 : size(obstacles,2)
                 % skip the drone itself
-                if isequal(drone.position,obstacles(i).position) 
+                if drone.id == i
                     continue;
                 end
 
@@ -73,9 +71,9 @@ classdef MAPF
                     && self.util.getCos(norm(drone.velocity - obstacles(i).velocity), norm(drone.position - obstacles(i).position)) > 0
                     %   Calculate the repulsive force
                     a = self.util.differential(drone.position,obstacles(i).position);
-                    b = self.util.differential(drone.position,target);
+                    b = self.util.differential(drone.position,drone.target);
                     fRepByObst = etaR * (1/distToObst - 1/affectDistance) * distToTarget^n/distToObst^2 * -1 * self.util.differential(drone.position,obstacles(i).position)...
-                        + (n/2) * etaR * (1/distToObst - 1/affectDistance)^2 * distToTarget^(n-1) * -1 * self.util.differential(drone.position,target);
+                        + (n/2) * etaR * (1/distToObst - 1/affectDistance)^2 * distToTarget^(n-1) * -1 * self.util.differential(drone.position,drone.target);
                     
                     %   Calculate the velocity repulsive force
                     fVByObst = etaV * norm(obstacles(i).velocity - drone.velocity) * self.util.differential(obstacles(i).position, drone.position);
@@ -90,8 +88,8 @@ classdef MAPF
 
         %Calculate the next step for current drone
         %   Consider add up kinematicConstrant later
-        function [nextPos,actualV] = getNextStep(self,drone)
-            force = self.getTotalForce(drone);
+        function [nextPos,actualV] = getNextStep(self,drone,drones)
+            force = self.getTotalForce(drone,drones);
             %   The maximum speed the drone can reach is corelated to force, but was constarined by vMAx
             targetV = drone.vMax * force;
             
@@ -121,9 +119,9 @@ classdef MAPF
         end
             
         %   Calculate the total force of the field on the drone
-        function f_total = getTotalForce(self,drone)
-            f_att = self.attraction(drone.position,self.target,self.attBound,self.epsilon);
-            f_rep = self.repulsion(drone,self.obstacles,self.repDist,self.etaR, self.etaV,self.target);
+        function f_total = getTotalForce(self,drone,drones)
+            f_att = self.attraction(drone,self.attBound,self.epsilon);
+            f_rep = self.repulsion(drone,drones,self.repDist,self.etaR, self.etaV);
            
 
             f_total = f_att + f_rep;
