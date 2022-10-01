@@ -10,7 +10,7 @@ drones = [];
 
 %   initialize all the drones
 for i = 1:size(startPts)
-    drones = [drones, Drone(i,startPts(i,:),targets(i,:),[0,0,0],[0,0,0])];
+    drones = [drones, Drone(i,startPts(i),targets(i),[0,0,0],[0,0,0])];
 end
 
 
@@ -28,10 +28,8 @@ while steps < 100
         a = abs(drones(i).position(:)- drones(i).target(:));
         [drones(i).position, drones(i).velocity] = apf.getNextStep(drones(i),drones);
         drones(i).waypoints = [drones(i).waypoints; drones(i).position];
-
         if ~all(abs(drones(i).position(:)-drones(i).target(:))<=[0.00001,0.00001,0.00001])
             drones(i).arrived = 1;
-        end
         %disp(steps);
     end
 

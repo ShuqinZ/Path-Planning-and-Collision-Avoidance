@@ -18,6 +18,8 @@ classdef Drone
     acceleration;
     position;
     target;
+    waypoints;
+    arrived;
     
    end
 
@@ -39,6 +41,9 @@ classdef Drone
            self.acceleration = initA;
            self.position = position;
            self.distMoved = 0;
+           self.waypoints = position;
+
+           self.arrived = 0;
        end
 
    end
