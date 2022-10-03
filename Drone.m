@@ -20,6 +20,7 @@ classdef Drone
     target;
     waypoints;
     arrived;
+    removed;
     
    end
 
@@ -43,7 +44,8 @@ classdef Drone
            self.distMoved = 0;
            self.waypoints = position;
 
-           self.arrived = 0;
+           self.arrived = false;
+           self.removed = false;
        end
 
    end
