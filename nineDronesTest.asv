@@ -263,7 +263,7 @@ for k = 1:iterations
                     if ~all(abs(colDronesPerTime(i).position(:)-colDronesPerTime(i).target(:))<=[0.00001,0.00001,0.00001])
                         colDronesPerTime(i).arrived = true;
                         arrivedDrones = arrivedDrones + 1;
-                        disp("Re-planned and arrived!")
+                        disp()
                     end
                     %disp(steps);
                 end

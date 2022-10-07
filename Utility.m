@@ -33,6 +33,10 @@ classdef Utility
             dis = vec1 .* vec2 / (norm(vec1) * norm(vec2));
         end
 
+        function saveCSV(self,data)
+            writematrix(data, ['./pathMatrix.csv'],'Delimiter',',','WriteMode','append');
+        end
+
         function coordinates = loadPtCld(self,filename)
 
             dimRow=true;
