@@ -33,11 +33,9 @@ classdef APF
         
             %   To prevent attraction force grown too big when it's far from target
             %   Set an upper bound to the arraction force
-            if dis <= distBound
-                fx = epsilon * (drone.target(1) - drone.position(1));
-                fy = epsilon * (drone.target(2) - drone.position(2));
-                fz = epsilon * (drone.target(3) - drone.position(3));
-            end
+            fx = epsilon * (drone.target(1) - drone.position(1));
+            fy = epsilon * (drone.target(2) - drone.position(2));
+            fz = epsilon * (drone.target(3) - drone.position(3));
             %   Return a the attraction force vector
             f_att = [fx, fy, fz];
         end
@@ -79,7 +77,7 @@ classdef APF
                 D_RO = min([D_RO,norm(drone.position - dronePositions(i))]);
             end
 
-            l = min([D_SR, D_RE, D_RO/2]) / drone.timeUnit;
+            l = min([D_SR, D_RE, D_RO/2]) * drone.timeUnit;
             if D_SR == 0
                 l = 0.04;
             end
@@ -87,9 +85,11 @@ classdef APF
             distanceMove = l * force;
             
             nextPos = drone.position + distanceMove;
+         
             actualV = (2 * norm(distanceMove) / drone.timeUnit) - drone.velocity;
-
-            %fprintf('next Pos [%f,%f,%f] with speed %f \n', nextPos, actualVValue);
+            if drone.ID == 6 || drone.ID == 7
+                fprintf("Drone %d at position [%f,%f,%f], with force [%f,%f,%f]\n", drone.ID, nextPos,force);
+            end
         end
             
         %   Calculate the total force of the field on the drone
@@ -100,7 +100,7 @@ classdef APF
             f_total = f_att + f_rep;
 
 
-            fprintf('total force [%f,%f,%f] \n', f_total);
+            %fprintf('total force [%f,%f,%f] \n', f_total);
             %f_total = self.util.getUnitVec(f_total);
             f_attMax = self.epsilon * norm(drone.target - drone.startPt);
             f_total = self.util.getNormalized(f_attMax, f_total);
