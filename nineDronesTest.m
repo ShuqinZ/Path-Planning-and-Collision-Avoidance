@@ -20,6 +20,10 @@ arriveNum = 0;
 color = [[0,0,0];[0.7,0,0];[0,0,1];[1,0,1];[0,1,0];[0,1,1];[1,1,1];[1,1,0]];
 collisions = [];
 
+displayCell = [];
+illuminationCell = [];
+sizeOfIllumCell = 5;
+dispCellSize = 0.1;
 
 % initialPts = util.loadPtCld(startPtFile);
 % 
@@ -200,6 +204,27 @@ for k = 1:iterations
                         %pause(2);
                         potentialCollide = true;
                         colDronesPerTime = [colDronesPerTime, drones(m)];
+
+                        %find drones in neighbor illumination cells
+                        illumCellDIn = [];
+                        illumCellDIn(1) = floor(drones(i).position(1)/dispCellSize)/sizeOfIllumCell;
+                        illumCellDIn(2) = floor(drones(i).position(2)/dispCellSize)/sizeOfIllumCell; 
+                        illumCellDIn(3) = floor(drones(i).position(3)/dispCellSize)/sizeOfIllumCell; 
+
+                        for y = 1:length(drones)
+                            if y == m || y == i
+                                continue
+                            end
+                            isNeighbor = true;
+                            for z = 1:3
+                                isNeighbor = all(isNeighbor) && all(drones(y).position(z) > (floor(illumCellDIn(z)) - displayCell * floor(sizeOfIllumCell/2)));
+                                isNeighbor = all(isNeighbor) && all(drones(y).position(z) < (ceil(illumCellDIn(z)) + displayCell * floor(sizeOfIllumCell/2)));
+                            end
+                            if isNeighbor
+                                nearByDrones = [nearByDrones, drones(y)];
+                            end
+                        end
+
                     end
                 end
 
@@ -230,11 +255,7 @@ for k = 1:iterations
             replanStep = 0;
             arrivedDrones = 0;
             collisionAgainDrones = [];
-
-            % get near by drones
-
-            nearByDrones = [];
-            
+        
             checkPosition = [];
             for x = 1:length(colDronesPerTime)
                 colDronesPerTime(x).position = colDronesPerTime(x).startPt;
@@ -263,8 +284,8 @@ for k = 1:iterations
                     end
 
                     for x = 1:length(nearByDrones)
-                        
-                        checkPosition = [checkPosition;waypoints(nearByDrones(x).ID + 9 * (replanStep - 1),:)];
+                        laststep = min(replanStep, step);
+                        checkPosition = [checkPosition;waypoints(nearByDrones(x).ID + 9 * (laststep - 1),:)];
                     end
 
                     [colDronesPerTime(i).position, colDronesPerTime(i).velocity] = apf.getNextStep(colDronesPerTime(i),checkPosition);
@@ -292,6 +313,7 @@ for k = 1:iterations
                  % collision detection
                 for i = 1:length(colDronesPerTime)
                     colAgainDNum = 0;
+                    collisionAgainDrones = [];
     
                     if colDronesPerTime(i).removed
                         continue
