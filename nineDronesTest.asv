@@ -292,7 +292,7 @@ for k = 1:iterations
                     % re-write waypoints
                     waypointsPerStep(colDronesPerTime(i).ID,:) = colDronesPerTime(i).position;
                               
-                    if norm(colDronesPerTime(i).position(:)-colDronesPerTime(i).target(:)) <= 0.1
+                    if norm(colDronesPerTime(i).position(:)-colDronesPerTime(i).target(:)) <= 0.02
                         colDronesPerTime(i).arrived = true;
                         arrivedDrones = arrivedDrones + 1;
                         disp("Re-planned and arrived!")
@@ -327,7 +327,7 @@ for k = 1:iterations
                             if m <= length(colDronesPerTime)
                                 arrivedDrones = arrivedDrones + 1;
                             end
-                            pause(2);
+                            %pause(2);
 
                             if removeWhenCollide
                                collisionAgainDrones = [collisionAgainDrones, nearByDrones(m)];
@@ -346,7 +346,8 @@ for k = 1:iterations
                         arrivedDrones = arrivedDrones + 1;
                     end
                 end
-                plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', [0 0 1]);
+
+                plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
                 hold on;
     
                 if ~removeWhenCollide
