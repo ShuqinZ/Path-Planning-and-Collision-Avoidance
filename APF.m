@@ -87,9 +87,8 @@ classdef APF
             nextPos = drone.position + distanceMove;
          
             actualV = (2 * norm(distanceMove) / drone.timeUnit) - drone.velocity;
-            if drone.ID == 6 || drone.ID == 7
-                fprintf("Drone %d at position [%f,%f,%f], with force [%f,%f,%f]\n", drone.ID, nextPos,force);
-            end
+            fprintf("Drone %d at position [%f,%f,%f], with force [%f,%f,%f]\n", drone.ID, nextPos,force);
+
         end
             
         %   Calculate the total force of the field on the drone
