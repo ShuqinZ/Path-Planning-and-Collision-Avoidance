@@ -8,10 +8,10 @@ classdef Drone
     yawMax;
     climbAngleMax;
     subAngleMax;
-    vMax = 19;
-    accMax = 14;
+    vMax = 3;
+    accMax = 3;
 
-    distMoved;
+    distTraveled;
 
     %   State Info
     velocity;
@@ -42,7 +42,7 @@ classdef Drone
            self.velocity = initV;
            self.acceleration = initA;
            self.position = position;
-           self.distMoved = 0;
+           self.distTraveled = 0;
            self.startPt = [];
            self.waypoints = position;
 
