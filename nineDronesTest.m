@@ -8,7 +8,7 @@ stoptime = 1;
 removeWhenCollide = true;
 iterations = 2;
 ptCldNums = 4;
-timeunit = 1/100;
+timeunit = 1/25;
 ptCldSeq = [1,2,3,4];
 
 ptClds = [];
@@ -95,6 +95,7 @@ for k = 1:iterations
             drones(i).target = ptCld(i,:);
             drones(i).arrived = false;
             drones(i).velocity = [0,0,0];
+            drones(i).distTraveled = 0;
         end
 
         % set the moving direction of each drones
@@ -125,6 +126,7 @@ for k = 1:iterations
                     arriveNum = arriveNum + 1;
                     drones(i).velocity = [0,0,0];
                     fprintf("Drone %d arrived, at speed (%f,%f,%f)\n", i, drones(i).velocity)
+                    %disp(step); 
                     continue
                 end
                 
@@ -166,12 +168,14 @@ for k = 1:iterations
                 end
 
                 distMoved = norm(positionMoved);
-
                 distLeft(i) = distLeft(i) - distMoved;
-
+                
                 drones(i).position = drones(i).position + positionMoved;
                 drones(i).velocity = newV;
+                drones(i).distTraveled = drones(i).distTraveled + distMoved;
                 
+
+                %fprintf("Moving %.4f at step %d with speed %.2f\n", distMoved, step, norm(newV));
                 waypointsPerStep(i,:) = drones(i).position;
 
 %                 v = norm(drones(i).velocity);
@@ -203,6 +207,8 @@ for k = 1:iterations
                         %pause(2);
                         potentialCollide = true;
                         colDronesPerTime = [colDronesPerTime, drones(m)];
+                        %nearByDrones = [nearByDrones, drones(m)];
+                        
 
                         %find drones in neighbor illumination cells
                         illumCellDIn = [];
@@ -229,7 +235,8 @@ for k = 1:iterations
 
                 if collisionDNum > 0
                     collisionDNum = collisionDNum + 1;
-                    colDronesPerTime = [colDronesPerTime, drones(i)];
+                    %colDronesPerTime = [colDronesPerTime, drones(i)];
+                    nearByDrones = [nearByDrones, drones(i)];
                     drones(i).removed = true;
                     dronesNum = dronesNum -1;
                     collisions = [collisions,collisionDNum];
@@ -259,6 +266,8 @@ for k = 1:iterations
             for x = 1:length(colDronesPerTime)
                 colDronesPerTime(x).position = colDronesPerTime(x).startPt;
                 colDronesPerTime(x).removed = false;
+                colDronesPerTime(x).distTraveled = 0;
+                colDronesPerTime(x).velocity = 0;
             end
             
             apf = APF();
@@ -268,8 +277,9 @@ for k = 1:iterations
                     pause(0.1);
                 end
                 disp(replanStep);
-
-                waypointsPerStep = waypoints(end-8:end,:);
+                if replanStep <= step
+                    waypointsPerStep = waypoints(end-(step - replanStep + 1)*9 + 1:end - (step - replanStep) * 9,:);
+                end
 
                 for i = 1:length(colDronesPerTime)
 
@@ -287,15 +297,16 @@ for k = 1:iterations
                         checkPosition = [checkPosition;waypoints(nearByDrones(x).ID + 9 * (laststep - 1),:)];
                     end
 
-                    [colDronesPerTime(i).position, colDronesPerTime(i).velocity] = apf.getNextStep(colDronesPerTime(i),checkPosition);
+                    colDronesPerTime(i) = apf.getNextStep(colDronesPerTime(i),checkPosition);
 
                     % re-write waypoints
                     waypointsPerStep(colDronesPerTime(i).ID,:) = colDronesPerTime(i).position;
                               
-                    if norm(colDronesPerTime(i).position(:)-colDronesPerTime(i).target(:)) <= 0.1
+                    if norm(colDronesPerTime(i).position(:)-colDronesPerTime(i).target(:)) <= 0.01
                         colDronesPerTime(i).arrived = true;
                         arrivedDrones = arrivedDrones + 1;
                         disp("Re-planned and arrived!")
+                        fprintf("Drone %d has arrived by replan, moving %.2f while origin %.2f\n", colDronesPerTime(i).ID, colDronesPerTime(i).distTraveled, norm(colDronesPerTime(i).target-colDronesPerTime(i).startPt));
                         dronesNum = dronesNum + 1;
                     end
                     %disp(steps);
