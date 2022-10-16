@@ -200,10 +200,10 @@ for k = 1:iterations
                         collisionDNum = collisionDNum + 1;
 
                         %   marke all colliding drones
-                        drones(m).removed = true;
+                        %drones(m).removed = true;
                         plot3(drones(i).position(1),drones(i).position(2),drones(i).position(3),'r.','MarkerSize',30);
-                        disp("Collided!")
-                        dronesNum = dronesNum - 1;
+                        fprintf("Drone %d and %d collided at [%.2f,%.2f,%.2f], step = %d\n",i,m,drones(i).position,step);
+                        %dronesNum = dronesNum - 1;
                         %pause(2);
                         potentialCollide = true;
                         colDronesPerTime = [colDronesPerTime, drones(m)];
@@ -237,8 +237,8 @@ for k = 1:iterations
                     collisionDNum = collisionDNum + 1;
                     %colDronesPerTime = [colDronesPerTime, drones(i)];
                     nearByDrones = [nearByDrones, drones(i)];
-                    drones(i).removed = true;
-                    dronesNum = dronesNum -1;
+                    %drones(i).removed = true;
+                    %dronesNum = dronesNum -1;
                     collisions = [collisions,collisionDNum];
                 end
             end
@@ -306,8 +306,8 @@ for k = 1:iterations
                         colDronesPerTime(i).arrived = true;
                         arrivedDrones = arrivedDrones + 1;
                         disp("Re-planned and arrived!")
-                        fprintf("Drone %d has arrived by replan, moving %.2f while origin %.2f\n", colDronesPerTime(i).ID, colDronesPerTime(i).distTraveled, norm(colDronesPerTime(i).target-colDronesPerTime(i).startPt));
-                        dronesNum = dronesNum + 1;
+                        fprintf("Origin Step %d, re-plan step %d, drone %d has arrived by replan, moving %.2f while origin %.2f\n", step, replanStep, colDronesPerTime(i).ID, colDronesPerTime(i).distTraveled, norm(colDronesPerTime(i).target-colDronesPerTime(i).startPt));
+                        %dronesNum = dronesNum + 1;
                     end
                     %disp(steps);
                 end
@@ -330,7 +330,7 @@ for k = 1:iterations
                     end
     
                     for m = 1:length(drones)
-                        if norm(colDronesPerTime(i).position - waypoints(drones(m).ID + 9 * (replanStep - 1),:))<= 0.1 && ~drones(m).removed
+                        if norm(colDronesPerTime(i).position - waypoints(drones(m).ID + 9 * (replanStep - 1),:))<= 0.1 && colDronesPerTime(i).ID ~= m 
                             colAgainDNum = colAgainDNum + 1;
                             drones(m).removed = true;
                             plot3(colDronesPerTime(i).position(1),colDronesPerTime(i).position(2),colDronesPerTime(i).position(3),'r.','MarkerSize',30);
