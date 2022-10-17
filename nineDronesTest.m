@@ -390,10 +390,9 @@ for k = 1:iterations
             step = step + 1;
             waypoints = [waypoints; waypointsPerStep];
         end
-
-        %util.saveCSV(waypoints);
-
-        pause(0.1)
+        
+        disp(waypoints);
+        util.saveCSV(waypoints);
     end
 end
 
