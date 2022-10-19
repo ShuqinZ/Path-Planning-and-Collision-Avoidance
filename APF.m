@@ -5,15 +5,14 @@ classdef APF
     properties
         
         %   Feild data sets
-        stepsize = 0.2;
         attBound = 5;
-        repDist = 1;
-        threshold = 0.2;
+        repDist1 = 2.5;
+        repDist2 = 3.5;
 
         %   Coefficients
-        epsilon = 0.5;
-        etaR = 0.2;
-        etaV = 0.2;
+        epsilon = 5;
+        etaR1 = 5;
+        etaR2 = 200;
         
         util;
         
@@ -27,23 +26,21 @@ classdef APF
 
 
         % Compute the attractive force
-        function f_att = attraction(self,drone,distBound,epsilon)
-            dis = norm(drone.position-drone.target);
-        
+        function f_att = attraction(self,drone,attBound,epsilon)
+            dist = norm(drone.target - drone.position);
+
             %   To prevent attraction force grown too big when it's far from target
             %   Set an upper bound to the arraction force
-            fx = epsilon * (drone.target(1) - drone.position(1));
-            fy = epsilon * (drone.target(2) - drone.position(2));
-            fz = epsilon * (drone.target(3) - drone.position(3));
+            dist = min(dist, attBound);
+            a = norm(drone.target - drone.position);
             %   Return a the attraction force vector
-            f_att = [fx, fy, fz];
+            f_att = epsilon * (drone.target - drone.position) * dist/norm(drone.target - drone.position);
         end
 
 
         %   Calculate the total Velocity-Repulsive force
-        function f_VRep = repulsion(self,drone,dronePositions,affectDistance,etaR)
-            f_VRep = [0, 0, 0];           %Initialize the force
-            n=2;    %n is an arbitrary real number which is greater than zero
+        function f_Rep = repulsion(self,drone,dronePositions,repDist1,repDist2,etaR1,etaR2)
+            f_Rep = [0, 0, 0];           %Initialize the force
 
             for i = 1 : size(dronePositions,1)
                 if isequal(drone.position,dronePositions(i,:))
@@ -53,12 +50,17 @@ classdef APF
                 distToObst = norm(drone.position-dronePositions(i,:));
                 
                 %Drone is affecting by abstacle's repulsivefield
-                if distToObst <= affectDistance
-                    %   Calculate the repulsive force
-                    fRepByObst = etaR * (1/distToObst - 1/affectDistance) * (1/distToObst^2) * (-1) * self.util.differential(drone.position,dronePositions(i,:));
-                    
-                    f_VRep = f_VRep + fRepByObst ;
+                if distToObst <= repDist1
+                    eta = etaR2;
+                elseif distToObst <= repDist2 && distToObst > repDist1
+                    eta = etaR1;
+                else
+                    eta = 0;
                 end
+                %   Calculate the repulsive force
+                fRepByObst = eta * (1/distToObst - 1/repDist2) * (1/distToObst^2) * (-1) * self.util.differential(drone.position,dronePositions(i,:));
+                    
+                f_Rep = f_Rep + fRepByObst ;
             end
 
         end
@@ -103,7 +105,7 @@ classdef APF
         %   Calculate the total force of the field on the drone
         function f_total = getTotalForce(self,drone,dronePositions)
             f_att = self.attraction(drone,self.attBound,self.epsilon);
-            f_rep = self.repulsion(drone,dronePositions,self.repDist,self.etaR);
+            f_rep = self.repulsion(drone,dronePositions,self.repDist1,self.repDist2,self.etaR1,self.etaR2);
            
             f_total = f_att + f_rep;
 

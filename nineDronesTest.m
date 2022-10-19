@@ -24,7 +24,7 @@ displayCell = [];
 illuminationCell = [];
 sizeOfIllumCell = 5;
 dispCellSize = 0.1;
-
+speedLimit = 0.6;
 % initialPts = util.loadPtCld(startPtFile);
 % 
 % for i = 1:size(targetPtFiles)
@@ -115,13 +115,13 @@ for k = 1:iterations
                     continue
                 end
                 
-                %   if the drone has already been removed, ignore it
-                if drones(i).removed
-                    continue
-                end
+%                 %   if the drone has already been removed, ignore it
+%                 if drones(i).removed
+%                     continue
+%                 end
 
                 % if the drone is already arrived, or just arrived, skip
-                if all(abs(drones(i).position - drones(i).target)<=[0.0001,0.0001,0.0001])
+                if all(abs(drones(i).position - drones(i).target)<=[0.001,0.001,0.001])
                     drones(i).arrived = true;
                     arriveNum = arriveNum + 1;
                     drones(i).velocity = [0,0,0];
@@ -133,43 +133,56 @@ for k = 1:iterations
 
                 % Check if the drone needs to speed up or slow down
                 v = norm(drones(i).velocity);
-                tToSlow = v /(drones(i).accMax);
+                tToSlow = v /(speedLimit * drones(i).accMax);
                 distToSlow = 0.5 * v * tToSlow;
                 
 
                 %   If the distance left is no bigger than the minimum
                 %   slowing down distance
-                if distLeft(i) > distToSlow && ((distLeft(i) - (v * timeunit + 0.5 * drones(i).accMax * timeunit^2)) < (distToSlow + (timeunit * v + 0.5 * drones(i).accMax^2 * timeunit^2)))
+                if distLeft(i) > distToSlow && ((distLeft(i) - (v * timeunit + 0.5 * speedLimit * drones(i).accMax * timeunit^2)) < (distToSlow + (timeunit * v + 0.5 * (speedLimit * drones(i).accMax)^2 * timeunit^2)))
   
-                    accTime = (sqrt(4* v^2 + 4 * drones(i).accMax * (distLeft(i) - distToSlow)) - 2 * v)/ (2 * drones(i).accMax);
+                    %accTime = (sqrt(4* v^2 + 4 * drones(i).accMax * (distLeft(i) - distToSlow)) - 2 * v)/ (2 * drones(i).accMax);
+                    accValue = (-(v*timeunit/(speedLimit * drones(i).accMax) + 0.5*timeunit^2)+sqrt((v*timeunit/(speedLimit * drones(i).accMax) + 0.5*timeunit^2)^2 + 2*(timeunit^2/(speedLimit * drones(i).accMax))*(distLeft(i) - v*timeunit - (v^2)/(2* speedLimit * drones(i).accMax))))...
+                        /(timeunit^2/(speedLimit * drones(i).accMax));
+                    %maxSpeed = v +  accTime * drones(i).accMax;
+                    %maxt = maxSpeed/(drones(i).accMax);
 
-                    maxSpeed = v +  accTime * drones(i).accMax;
-                    maxt = maxSpeed/(drones(i).accMax);
-                    newdistToSlow = 0.5 * maxSpeed* maxt;
-                    left = distLeft(i) - 0.5 * (v+maxSpeed) * accTime;
+                    %newV = drones(i).velocity + drones(i).accMax * accTime * direction(i,:) - drones(i).accMax * (timeunit-accTime) * direction(i,:);
+                    %positionMoved = drones(i).velocity * accTime + 0.5 * drones(i).accMax * accTime^2 * direction(i,:) + newV * (timeunit-accTime) ...
+                     %   + 0.5 * drones(i).accMax * (timeunit-accTime)^2 * direction(i,:);
 
-                    newV = drones(i).velocity + drones(i).accMax * accTime * direction(i,:) - drones(i).accMax * (timeunit-accTime) * direction(i,:);
-                    positionMoved = drones(i).velocity * accTime + 0.5 * drones(i).accMax * accTime^2 * direction(i,:) + newV * (timeunit-accTime) ...
-                        + 0.5 * drones(i).accMax * (timeunit-accTime)^2 * direction(i,:);
+                    newV = drones(i).velocity + accValue * timeunit * direction(i,:);
+                    positionMoved = drones(i).velocity * timeunit + 0.5 * accValue * timeunit^2 * direction(i,:);
+
+                    newdistToSlow = (0.5 * (v+accValue*timeunit)^2) /(speedLimit * drones(i).accMax);
+                    left = distLeft(i) - norm(positionMoved);%(0.5 *accValue*timeunit^2 + v * timeunit);
                     
                 elseif distLeft(i) <= distToSlow
-                    accTime = min(v/drones(i).accMax,timeunit);
-                    newV = drones(i).velocity - drones(i).accMax * accTime * direction(i,:);
-                    positionMoved = 0.5 * (drones(i).velocity + newV) * accTime;
+                    accValue = min(v/timeunit, speedLimit * drones(i).accMax);
+                    newV = drones(i).velocity - accValue * timeunit * direction(i,:);
+                    positionMoved = 0.5 * (drones(i).velocity + newV) * timeunit;
 
-                elseif  v == drones(i).vMax
-                    accTime = 0;
+                    newdistToSlow = (0.5 * (v-accValue*timeunit)^2) /(speedLimit * drones(i).accMax);
+
+                elseif  v == speedLimit * drones(i).vMax
+                    accValue = 0;
                     newV = drones(i).velocity;
                     positionMoved = newV * timeunit;
+
+                    newdistToSlow = distToSlow;
                 else
-                    accTime = min((drones(i).vMax - v)/drones(i).accMax, timeunit); 
-                    newV = drones(i).velocity + drones(i).accMax * accTime * direction(i,:);
-                    positionMoved = 0.5 * (drones(i).velocity + newV) * accTime + newV * (timeunit-accTime);
+                    %accTime = min((drones(i).vMax - v)/drones(i).accMax, timeunit); 
+                    accValue = min((speedLimit * drones(i).vMax - v)/timeunit, speedLimit * drones(i).accMax);
+                    newV = drones(i).velocity + accValue * timeunit * direction(i,:);
+                    positionMoved = 0.5 * accValue * direction(i,:) * timeunit^2 + drones(i).velocity * timeunit;
+
+                    newdistToSlow = (0.5 * (v+accValue*timeunit)^2) /(speedLimit * drones(i).accMax);
                 end
 
                 distMoved = norm(positionMoved);
                 distLeft(i) = distLeft(i) - distMoved;
                 
+                drones(i).acceleration = accValue * direnction(i);
                 drones(i).position = drones(i).position + positionMoved;
                 drones(i).velocity = newV;
                 drones(i).distTraveled = drones(i).distTraveled + distMoved;
@@ -182,10 +195,10 @@ for k = 1:iterations
 %                 tToSlow = v /(drones(i).accMax);
 %                 distToSlow = 0.5 * v * tToSlow;
 
-                %fprintf("the %d th drone is at (%f,%f,%f), with the speed %f, dist left %f, dist to slow %f\n", i, drones(i).position, norm(drones(i).velocity), distLeft(i), distToSlow);
+                %fprintf("the %d th drone is at (%f,%f,%f), with the speed %f, dist left %f, dist to slow %f\n", i, drones(i).position, norm(drones(i).velocity), distLeft(i), newdistToSlow);
                 
-                plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
-                hold on;
+                %plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
+                %hold on;
             end
             
             % collision detection
@@ -200,7 +213,7 @@ for k = 1:iterations
                         collisionDNum = collisionDNum + 1;
 
                         %   marke all colliding drones
-                        %drones(m).removed = true;
+                        drones(m).removed = true;
                         plot3(drones(i).position(1),drones(i).position(2),drones(i).position(3),'r.','MarkerSize',30);
                         fprintf("Drone %d and %d collided at [%.2f,%.2f,%.2f], step = %d\n",i,m,drones(i).position,step);
                         %dronesNum = dronesNum - 1;
@@ -237,7 +250,7 @@ for k = 1:iterations
                     collisionDNum = collisionDNum + 1;
                     %colDronesPerTime = [colDronesPerTime, drones(i)];
                     nearByDrones = [nearByDrones, drones(i)];
-                    %drones(i).removed = true;
+                    drones(i).removed = true;
                     %dronesNum = dronesNum -1;
                     collisions = [collisions,collisionDNum];
                 end
@@ -273,7 +286,7 @@ for k = 1:iterations
             apf = APF();
             while length(colDronesPerTime) ~= arrivedDrones
                 replanStep = replanStep + 1;
-                if replanStep == 1
+                if replanStep == 5
                     pause(0.1);
                 end
                 disp(replanStep);
@@ -391,7 +404,7 @@ for k = 1:iterations
             waypoints = [waypoints; waypointsPerStep];
         end
         
-        disp(waypoints);
+        %disp(waypoints);
         util.saveCSV(waypoints);
     end
 end
