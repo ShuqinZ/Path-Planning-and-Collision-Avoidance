@@ -51,7 +51,6 @@ for j = 1:floor(startStep/9)
     end
 
 end
-pause(0.1);
 
 for i = (droneID + floor(startStep/9)*9):9:size(waypoints,1)
 
