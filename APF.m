@@ -76,7 +76,7 @@ classdef APF
             D_RO = inf;
             for i = 1:size(dronePositions)
                 D_RO = min([D_RO,norm(drone.position - dronePositions(i,:))]);
-                fprintf("Dist to Obstacle [%.2f,%.2f,%.2f] = %.2f ", dronePositions(i,:),D_RO)
+                %fprintf("Dist to Obstacle [%.2f,%.2f,%.2f] = %.2f\n", dronePositions(i,:),D_RO)
             end
 
             l = min([D_SR, D_RE, D_RO/2]) * drone.timeUnit;

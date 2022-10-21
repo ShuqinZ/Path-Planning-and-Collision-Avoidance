@@ -25,6 +25,8 @@ illuminationCell = [];
 sizeOfIllumCell = 5;
 dispCellSize = 0.1;
 speedLimit = 0.6;
+
+totalSteps = 0;
 % initialPts = util.loadPtCld(startPtFile);
 % 
 % for i = 1:size(targetPtFiles)
@@ -84,6 +86,7 @@ for k = 1:iterations
         
 
         step = 0;
+        replanStep = 0;
         arriveNum = 0;
         nearByDrones = [];
         colDrones = [];
@@ -181,8 +184,9 @@ for k = 1:iterations
 
                 distMoved = norm(positionMoved);
                 distLeft(i) = distLeft(i) - distMoved;
-                
+
                 drones(i).acceleration = accValue * direction(i,:);
+
                 drones(i).position = drones(i).position + positionMoved;
                 drones(i).velocity = newV;
                 drones(i).distTraveled = drones(i).distTraveled + distMoved;
@@ -271,7 +275,6 @@ for k = 1:iterations
         % form the last point cloud formation 
         if potentialCollide
 
-            replanStep = 0;
             arrivedDrones = 0;
             collisionAgainDrones = [];
         
@@ -406,10 +409,12 @@ for k = 1:iterations
         
         %disp(waypoints);
         util.saveCSV(waypoints);
+        totalSteps = totalSteps + size(waypoints,1) / 9;
     end
     pause(0.01);
-end
 
+end
+disp(totalSteps);
 figure(2);
 h = histogram(collisions, length(initialPts));
 xlabel('FLSs involved in the Collision','FontSize',16);
