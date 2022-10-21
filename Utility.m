@@ -34,7 +34,7 @@ classdef Utility
         end
 
         function saveCSV(self,data)
-            writematrix(data, ['./pathMatrix.csv'],'Delimiter',',','WriteMode','append');
+            writematrix(data, ['./pathMatrix.csv'],'Delimiter',',','WriteMode','append', 'WriteMode', 'overwrite');
         end
 
         function coordinates = loadPtCld(self,filename)

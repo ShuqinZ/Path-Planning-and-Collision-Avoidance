@@ -182,7 +182,7 @@ for k = 1:iterations
                 distMoved = norm(positionMoved);
                 distLeft(i) = distLeft(i) - distMoved;
                 
-                drones(i).acceleration = accValue * direction(i,:);
+                drones(i).acceleration = accValue * direction(i);
                 drones(i).position = drones(i).position + positionMoved;
                 drones(i).velocity = newV;
                 drones(i).distTraveled = drones(i).distTraveled + distMoved;
@@ -197,8 +197,8 @@ for k = 1:iterations
 
                 %fprintf("the %d th drone is at (%f,%f,%f), with the speed %f, dist left %f, dist to slow %f\n", i, drones(i).position, norm(drones(i).velocity), distLeft(i), newdistToSlow);
                 
-                plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
-                hold on;
+                %plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
+                %hold on;
             end
             
             % collision detection
@@ -313,7 +313,7 @@ for k = 1:iterations
                     colDronesPerTime(i) = apf.getNextStep(colDronesPerTime(i),checkPosition);
 
                     % re-write waypoints
-                    waypointsPerStep(colDronesPerTime(i).ID,:) = [colDronesPerTime(i).position, colDronesPerTime(i).velocity, colDronesPerTime(i).acceleration, j];
+                    waypointsPerStep(colDronesPerTime(i).ID,:) = [colDronesPerTime(i).position, colDronesPerTime(i).velovity, colDronesPerTime(i).acceleration, j];
                               
                     if norm(colDronesPerTime(i).position(:)-colDronesPerTime(i).target(:)) <= 0.01
                         colDronesPerTime(i).arrived = true;
@@ -407,7 +407,6 @@ for k = 1:iterations
         %disp(waypoints);
         util.saveCSV(waypoints);
     end
-    pause(0.01);
 end
 
 figure(2);
