@@ -89,8 +89,9 @@ classdef APF
             
             drone.position = drone.position + distanceMove;
             drone.distTraveled = drone.distTraveled + norm(distanceMove);
-
+            lastV = drone.velocity;
             drone.velocity = ((2 * norm(distanceMove) / drone.timeUnit) - norm(drone.velocity)) * force;
+            drone.acceleration = (drone.velocity - lastV)/drone.timeUnit;
             if l == D_SR * drone.timeUnit
                 md = "D_SR";
             elseif l == D_RE * drone.timeUnit || l == 0.5 * drone.accMax * drone.timeUnit^2
