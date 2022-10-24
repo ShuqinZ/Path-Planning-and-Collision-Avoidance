@@ -19,7 +19,6 @@ color = [[0,0,0];[0.7,0,0];[0,0,1];[1,0,1];[0,1,0];[0,1,1];[1,1,1];[1,1,0]];
 collisions = [];
 collisionsAgain = [];
 collisionAgainDrones = [];
-
 displayCell = [];
 illuminationCell = [];
 sizeOfIllumCell = 5;
@@ -58,6 +57,7 @@ ptClds(:,:,6) = readmatrix("Point Cloud Squence/pt1811.csv");
 
 ptCldNums = size(ptClds,3);
 
+
 for i = 1:length(initialPts)
     drones(i) = Drone(i,initialPts(i,:),[0,0,0],[0,0,0],[0,0,0]);
     waypointsPerStep = [drones(i).position, drones(i).velocity, drones(i).acceleration,1];
@@ -65,7 +65,9 @@ end
 
 
 dronesNum = length(drones);
+
 targetSequence = 0;
+
 for k = 1:iterations
 
 
@@ -120,7 +122,7 @@ for k = 1:iterations
         
         while arriveNum ~= dronesNum
             step = step + 1;
-            disp(step)
+            disp(step);
             for i = 1:length(drones)
                 accTime = 0;
                 
@@ -213,6 +215,10 @@ for k = 1:iterations
                 
 %                 plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
 %                 hold on;
+                %fprintf("the %d th drone is at (%f,%f,%f), with the speed %f, dist left %f, dist to slow %f\n", i, drones(i).position, norm(drones(i).velocity), distLeft(i), newdistToSlow);
+                
+                plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
+                hold on;
             end
             
             % collision detection
@@ -327,14 +333,11 @@ for k = 1:iterations
                         laststep = min(replanStep, step);
                         checkPosition = [checkPosition;waypoints(nearByDrones(x).ID + dronesNum * (laststep - 1),1:3)];
                     end
-                    if replanStep==200
-                        pause(0.1);
-                    end
-
                     colDronesPerTime(i) = apf.getNextStep(colDronesPerTime(i),checkPosition);
 
                     % re-write waypoints
                     waypointsPerStep(colDronesPerTime(i).ID,:) = [colDronesPerTime(i).position, colDronesPerTime(i).velocity, colDronesPerTime(i).acceleration, targetSequence];
+
                               
                     if norm(colDronesPerTime(i).position(:)-colDronesPerTime(i).target(:)) <= 0.01
                         colDronesPerTime(i).arrived = true;
@@ -370,6 +373,7 @@ for k = 1:iterations
                             hold on;
                             fprintf("Drone %d and %d collided again at [%f,%f,%f] with distance %f ", ...
                                 colDronesPerTime(i).ID, m, waypoints(drones(m).ID + dronesNum * (replanStep - 1),1:3),norm(colDronesPerTime(i).position - waypoints(drones(m).ID + dronesNum * (replanStep - 1),1:3)))
+
                             if m <= length(colDronesPerTime)
                                 arrivedDrones = arrivedDrones + 1;
                             end
@@ -445,7 +449,5 @@ figure(3);
 h = histogram(collisionsAgain, length(dronesNum));
 xlabel('FLSs involved in the Collision','FontSize',16);
 ylabel('Collision Again Times','FontSize',16);
-
-
 
 

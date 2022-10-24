@@ -32,6 +32,7 @@ classdef APF
             %   To prevent attraction force grown too big when it's far from target
             %   Set an upper bound to the arraction force
             dist = min(dist, attBound);
+
             %   Return a the attraction force vector
             f_att = epsilon * (drone.target - drone.position) * dist/norm(drone.target - drone.position);
         end
