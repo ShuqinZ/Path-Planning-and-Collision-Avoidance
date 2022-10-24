@@ -6,10 +6,8 @@ util = Utility();
 % Configurable parameters
 stoptime = 1;
 removeWhenCollide = true;
-iterations = 2;
-ptCldNums = 4;
+iterations = 1;
 timeunit = 1/25;
-ptCldSeq = [1,2,3,4];
 
 ptClds = [];
 direction = [];
@@ -34,19 +32,29 @@ totalSteps = 0;
 % end
 
 % 3x3 matrix on the ground
-initialPts = [[0,0,0];[0,5,0];[0,10,0];[5,0,0];[5,5,0];[5,10,0];[10,0,0];[10,5,0];[10,10,0]];
+% initialPts = [[0,0,0];[0,5,0];[0,10,0];[5,0,0];[5,5,0];[5,10,0];[10,0,0];[10,5,0];[10,10,0]];
+% 
+% % lifting up to the 3x3 matrix in the air
+% ptClds(:,:,1) = [[0,0,25];[0,5,25];[0,10,25];[5,0,25];[5,5,25];[5,10,25];[10,0,25];[10,5,25];[10,10,25]]; 
+% 
+% % a line
+% ptClds(:,:,2) = [[25,25,25];[27.5,25,25];[30,25,25];[32.5,25,25];[35,25,25];[37.5,25,25];[40,25,25];[42.5,25,25];[45,25,25]];
+% 
+% % a cube with one FLS sticking out
+% ptClds(:,:,3) = [[45,15,15];[25,35,15];[45,35,15];[25,15,35];[25,35,35];[45,15,35];[45,35,35];[35,25,45];[25,15,15]];
+% 
+% % circle
+% ptClds(:,:,4) = [[25,40,25];[34.65,36.5,25];[39.75,27.6,25];[38,17.5,25];[30.15,10.9,25];[19.85,10.9,25];[12,17.5,25];[10.25,27.6,25];[15.35,36.5,25]];
 
-% lifting up to the 3x3 matrix in the air
-ptClds(:,:,1) = [[0,0,25];[0,5,25];[0,10,25];[5,0,25];[5,5,25];[5,10,25];[10,0,25];[10,5,25];[10,10,25]]; 
+initialPts = readmatrix("Point Cloud Squence/initial_onGround.csv");
+ptClds(:,:,1) = readmatrix("Point Cloud Squence/initial_Rise.csv");
+ptClds(:,:,2) = readmatrix("Point Cloud Squence/pt1379.csv");
+ptClds(:,:,3) = readmatrix("Point Cloud Squence/pt1547.csv");
+ptClds(:,:,4) = readmatrix("Point Cloud Squence/pt1605.csv");
+ptClds(:,:,5) = readmatrix("Point Cloud Squence/pt1709.csv");
+ptClds(:,:,6) = readmatrix("Point Cloud Squence/pt1811.csv");
 
-% a line
-ptClds(:,:,2) = [[25,25,25];[27.5,25,25];[30,25,25];[32.5,25,25];[35,25,25];[37.5,25,25];[40,25,25];[42.5,25,25];[45,25,25]];
-
-% a cube with one FLS sticking out
-ptClds(:,:,3) = [[45,15,15];[25,35,15];[45,35,15];[25,15,35];[25,35,35];[45,15,35];[45,35,35];[35,25,45];[25,15,15]];
-
-% circle
-ptClds(:,:,4) = [[25,40,25];[34.65,36.5,25];[39.75,27.6,25];[38,17.5,25];[30.15,10.9,25];[19.85,10.9,25];[12,17.5,25];[10.25,27.6,25];[15.35,36.5,25]];
+ptCldNums = size(ptClds,3);
 
 for i = 1:length(initialPts)
     drones(i) = Drone(i,initialPts(i,:),[0,0,0],[0,0,0],[0,0,0]);
@@ -55,7 +63,7 @@ end
 
 
 dronesNum = length(drones);
-
+targetSequence = 0;
 for k = 1:iterations
 
 
@@ -73,6 +81,7 @@ for k = 1:iterations
 
 
     for j = startPtCld:endPtCld
+        targetSequence = targetSequence + 1;
 
         waypoints = [];
 
@@ -81,7 +90,7 @@ for k = 1:iterations
         elseif j == ptCldNums + 2
             ptCld = initialPts;
         else
-            ptCld = ptClds(:,:,ptCldSeq(j));
+            ptCld = ptClds(:,:,j);
         end
         
 
@@ -109,7 +118,7 @@ for k = 1:iterations
         
         while arriveNum ~= dronesNum
             step = step + 1;
-            
+            disp(step)
             for i = 1:length(drones)
                 accTime = 0;
                 
@@ -124,11 +133,11 @@ for k = 1:iterations
 %                 end
 
                 % if the drone is already arrived, or just arrived, skip
-                if all(abs(drones(i).position - drones(i).target)<=[0.001,0.001,0.001])
+                if all(abs(drones(i).position - drones(i).target)<=[0.002,0.002,0.002])
                     drones(i).arrived = true;
                     arriveNum = arriveNum + 1;
                     drones(i).velocity = [0,0,0];
-                    fprintf("Drone %d arrived, at speed (%f,%f,%f)\n", i, drones(i).velocity)
+                    fprintf("Drone %d arrived, %d has arrived and %d left\n", i, arriveNum, dronesNum-arriveNum);
                     %disp(step); 
                     continue
                 end
@@ -193,16 +202,15 @@ for k = 1:iterations
                 
 
                 %fprintf("Moving %.4f at step %d with speed %.2f\n", distMoved, step, norm(newV));
-                waypointsPerStep(i,:) = [drones(i).position, drones(i).velocity, drones(i).acceleration,j];
+                waypointsPerStep(i,:) = [drones(i).position, drones(i).velocity, drones(i).acceleration,targetSequence];
 
 %                 v = norm(drones(i).velocity);
 %                 tToSlow = v /(drones(i).accMax);
 %                 distToSlow = 0.5 * v * tToSlow;
-
-                %fprintf("the %d th drone is at (%f,%f,%f), with the speed %f, dist left %f, dist to slow %f\n", i, drones(i).position, norm(drones(i).velocity), distLeft(i), newdistToSlow);
+%                 fprintf("the %d th drone is at (%f,%f,%f), with the speed %f, dist left %f, dist to slow %f\n", i, drones(i).position, norm(drones(i).velocity), distLeft(i), newdistToSlow);
                 
-                plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
-                hold on;
+%                 plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
+%                 hold on;
             end
             
             % collision detection
@@ -269,6 +277,8 @@ for k = 1:iterations
 
             waypoints = [waypoints; waypointsPerStep];
         end
+        plot3(waypoints(:,1), waypoints(:,2), waypoints(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
+        hold on;
 
         % When a collision happens, we record the collision co-ordinate, the ID of
         % collision drons. Re-plan the path for the colliding drones, starting
@@ -281,6 +291,7 @@ for k = 1:iterations
             checkPosition = [];
             for x = 1:length(colDronesPerTime)
                 colDronesPerTime(x).position = colDronesPerTime(x).startPt;
+                colDronesPerTime(x).arrived = false;
                 colDronesPerTime(x).removed = false;
                 colDronesPerTime(x).distTraveled = 0;
                 colDronesPerTime(x).velocity = 0;
@@ -294,7 +305,7 @@ for k = 1:iterations
                 end
                 disp(replanStep);
                 if replanStep <= step
-                    waypointsPerStep = waypoints(end-(step - replanStep + 1)*9 + 1:end - (step - replanStep) * 9,:);
+                    waypointsPerStep = waypoints(end-(step - replanStep + 1)*dronesNum + 1:end - (step - replanStep) * dronesNum,:);
                 end
 
                 for i = 1:length(colDronesPerTime)
@@ -310,18 +321,17 @@ for k = 1:iterations
 
                     for x = 1:length(nearByDrones)
                         laststep = min(replanStep, step);
-                        checkPosition = [checkPosition;waypoints(nearByDrones(x).ID + 9 * (laststep - 1),1:3)];
+                        checkPosition = [checkPosition;waypoints(nearByDrones(x).ID + dronesNum * (laststep - 1),1:3)];
                     end
 
                     colDronesPerTime(i) = apf.getNextStep(colDronesPerTime(i),checkPosition);
 
                     % re-write waypoints
-                    waypointsPerStep(colDronesPerTime(i).ID,:) = [colDronesPerTime(i).position, colDronesPerTime(i).velocity, colDronesPerTime(i).acceleration, j];
+                    waypointsPerStep(colDronesPerTime(i).ID,:) = [colDronesPerTime(i).position, colDronesPerTime(i).velocity, colDronesPerTime(i).acceleration, targetSequence];
                               
                     if norm(colDronesPerTime(i).position(:)-colDronesPerTime(i).target(:)) <= 0.01
                         colDronesPerTime(i).arrived = true;
                         arrivedDrones = arrivedDrones + 1;
-                        disp("Re-planned and arrived!")
                         fprintf("Origin Step %d, re-plan step %d, drone %d has arrived by replan, moving %.2f while origin %.2f\n", step, replanStep, colDronesPerTime(i).ID, colDronesPerTime(i).distTraveled, norm(colDronesPerTime(i).target-colDronesPerTime(i).startPt));
                         %dronesNum = dronesNum + 1;
                     end
@@ -330,11 +340,11 @@ for k = 1:iterations
                 % to those collide again, maintain there last position
                 % before colliding
                 for x = 1:length(collisionAgainDrones)
-                    collisionAgainDrones(x).position = waypoints(x + 9 * (replanStep - 2),1:3);
-                    waypointsPerStep(collisionAgainDrones(x),:) = waypoints(x + 9 * (replanStep - 2),:);
+                    collisionAgainDrones(x).position = waypoints(x + dronesNum * (replanStep - 2),1:3);
+                    waypointsPerStep(collisionAgainDrones(x),:) = waypoints(x + dronesNum * (replanStep - 2),:);
                 end
                 
-                waypoints(1 + 9 * (replanStep - 1):9 * replanStep,:) = waypointsPerStep;
+                waypoints(1 + dronesNum * (replanStep - 1):dronesNum * replanStep,:) = waypointsPerStep;
 
                  % collision detection
                 for i = 1:length(colDronesPerTime)
@@ -346,11 +356,12 @@ for k = 1:iterations
                     end
     
                     for m = 1:length(drones)
-                        if norm(colDronesPerTime(i).position - waypoints(drones(m).ID + 9 * (replanStep - 1),1:3))<= 0.1 && colDronesPerTime(i).ID ~= m 
+                        if norm(colDronesPerTime(i).position - waypoints(drones(m).ID + dronesNum * (replanStep - 1),1:3))<= 0.1 && colDronesPerTime(i).ID ~= m 
                             colAgainDNum = colAgainDNum + 1;
                             drones(m).removed = true;
                             plot3(colDronesPerTime(i).position(1),colDronesPerTime(i).position(2),colDronesPerTime(i).position(3),'r.','MarkerSize',30);
-                            disp("Collided Again!")
+                            fprintf("Drone %d and %d collided again at [%f,%f,%f] with distance %f ", ...
+                                colDronesPerTime(i).ID, m, waypoints(drones(m).ID + dronesNum * (replanStep - 1),1:3),norm(colDronesPerTime(i).position - waypoints(drones(m).ID + dronesNum * (replanStep - 1),1:3)))
                             if m <= length(colDronesPerTime)
                                 arrivedDrones = arrivedDrones + 1;
                             end
@@ -409,8 +420,9 @@ for k = 1:iterations
         
         %disp(waypoints);
         util.saveCSV(waypoints);
-        totalSteps = totalSteps + size(waypoints,1) / 9;
+        totalSteps = totalSteps + size(waypoints,1) / dronesNum;
     end
+
     pause(0.01);
 
 end
