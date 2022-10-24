@@ -8,8 +8,8 @@ classdef Drone
     yawMax;
     climbAngleMax;
     subAngleMax;
-    vMax = 15;
-    accMax = 15;
+    vMax = 3;
+    accMax = 3;
 
     distTraveled;
 

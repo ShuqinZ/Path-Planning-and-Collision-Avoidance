@@ -17,6 +17,8 @@ collisionPt = [];
 arriveNum = 0;
 color = [[0,0,0];[0.7,0,0];[0,0,1];[1,0,1];[0,1,0];[0,1,1];[1,1,1];[1,1,0]];
 collisions = [];
+collisionsAgain = [];
+collisionAgainDrones = [];
 
 displayCell = [];
 illuminationCell = [];
@@ -277,8 +279,10 @@ for k = 1:iterations
 
             waypoints = [waypoints; waypointsPerStep];
         end
-        plot3(waypoints(:,1), waypoints(:,2), waypoints(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
-        hold on;
+        if ~potentialCollide
+            plot3(waypoints(:,1), waypoints(:,2), waypoints(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
+            hold on;
+        end
 
         % When a collision happens, we record the collision co-ordinate, the ID of
         % collision drons. Re-plan the path for the colliding drones, starting
@@ -323,6 +327,9 @@ for k = 1:iterations
                         laststep = min(replanStep, step);
                         checkPosition = [checkPosition;waypoints(nearByDrones(x).ID + dronesNum * (laststep - 1),1:3)];
                     end
+                    if replanStep==200
+                        pause(0.1);
+                    end
 
                     colDronesPerTime(i) = apf.getNextStep(colDronesPerTime(i),checkPosition);
 
@@ -341,7 +348,7 @@ for k = 1:iterations
                 % before colliding
                 for x = 1:length(collisionAgainDrones)
                     collisionAgainDrones(x).position = waypoints(x + dronesNum * (replanStep - 2),1:3);
-                    waypointsPerStep(collisionAgainDrones(x),:) = waypoints(x + dronesNum * (replanStep - 2),:);
+                    waypointsPerStep(collisionAgainDrones(x).ID,:) = waypoints(x + dronesNum * (replanStep - 2),:);
                 end
                 
                 waypoints(1 + dronesNum * (replanStep - 1):dronesNum * replanStep,:) = waypointsPerStep;
@@ -360,6 +367,7 @@ for k = 1:iterations
                             colAgainDNum = colAgainDNum + 1;
                             drones(m).removed = true;
                             plot3(colDronesPerTime(i).position(1),colDronesPerTime(i).position(2),colDronesPerTime(i).position(3),'r.','MarkerSize',30);
+                            hold on;
                             fprintf("Drone %d and %d collided again at [%f,%f,%f] with distance %f ", ...
                                 colDronesPerTime(i).ID, m, waypoints(drones(m).ID + dronesNum * (replanStep - 1),1:3),norm(colDronesPerTime(i).position - waypoints(drones(m).ID + dronesNum * (replanStep - 1),1:3)))
                             if m <= length(colDronesPerTime)
@@ -368,7 +376,7 @@ for k = 1:iterations
                             pause(2);
 
                             if removeWhenCollide
-                               collisionAgainDrones = [collisionAgainDrones, nearByDrones(m)];
+                               collisionAgainDrones = [collisionAgainDrones, drones(m)];
                             end
 
                             potentialCollide = true;
@@ -378,7 +386,7 @@ for k = 1:iterations
                     if colAgainDNum > 0
                         colAgainDNum = colAgainDNum + 1;
                         colDronesPerTime(i).removed = true;
-                        dronesNum = dronesNum -1;
+                        %dronesNum = dronesNum -1;
                         collisionsAgain = [collisionsAgain,colAgainDNum];
                         collisionAgainDrones = [collisionAgainDrones, colDronesPerTime(i)];
                         arrivedDrones = arrivedDrones + 1;
@@ -421,16 +429,23 @@ for k = 1:iterations
         %disp(waypoints);
         util.saveCSV(waypoints);
         totalSteps = totalSteps + size(waypoints,1) / dronesNum;
-    end
 
-    pause(0.01);
+        fprintf('current point cloud takes %d steps, total %d steps\n', size(waypoints,1) / dronesNum, totalSteps);
+        pause(0.01);
+    end
 
 end
 disp(totalSteps);
 figure(2);
-h = histogram(collisions, length(initialPts));
+h = histogram(collisions, length(dronesNum));
 xlabel('FLSs involved in the Collision','FontSize',16);
 ylabel('Collision Times','FontSize',16);
+
+figure(3);
+h = histogram(collisionsAgain, length(dronesNum));
+xlabel('FLSs involved in the Collision','FontSize',16);
+ylabel('Collision Again Times','FontSize',16);
+
 
 
 
