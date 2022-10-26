@@ -23,19 +23,24 @@ displayCell = [];
 illuminationCell = [];
 sizeOfIllumCell = 5;
 dispCellSize = 0.1;
-speedLimit = 0.6;
+speedLimit = 1;
 
 totalSteps = 0;
 ans = [];
 
 centralPoint = [0,0,0];
 travalRadius = 150;
-for angle = 1: 1: 179
-    radian = angle * pi/180;
-    initialPts = [[centralPoint(1) - travalRadius,centralPoint(2),centralPoint(3)];...
+angle = 2;
+
+initialPts = [[centralPoint(1) - travalRadius,centralPoint(2),centralPoint(3)]];
+ptCld = [[centralPoint(1) + travalRadius,centralPoint(2),centralPoint(3)]];
+
+for num = 1: 1: 179
+    radian = num * angle * pi/180;
+    initialPts = [initialPts;
         [centralPoint(1) - cos(radian) * travalRadius,centralPoint(2) - sin(radian) * travalRadius,centralPoint(3)]];
     
-    ptCld = [[centralPoint(1) + travalRadius,centralPoint(2),centralPoint(3)];...
+    ptCld = [ptCld;...
         [centralPoint(1) + cos(radian) * travalRadius,centralPoint(2) + sin(radian) * travalRadius,centralPoint(3)]];
     
     
@@ -71,7 +76,7 @@ for angle = 1: 1: 179
             distLeft(i) = norm(drones(i).position - ptCld(i,:));
         end
         
-        while arriveNum ~= dronesNum && angle == 1
+        while arriveNum ~= dronesNum
             step = step + 1;
             disp(step);
             for i = 1:length(drones)
@@ -166,7 +171,7 @@ for angle = 1: 1: 179
                 
 %                 plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
 %                 hold on;
-                %fprintf("the %d th drone is at (%f,%f,%f), with the speed %f, dist left %f, dist to slow %f\n", i, drones(i).position, norm(drones(i).velocity), distLeft(i), newdistToSlow);
+%                 fprintf("the %d th drone is at (%f,%f,%f), with the speed %f, dist left %f, dist to slow %f\n", i, drones(i).position, norm(drones(i).velocity), distLeft(i), newdistToSlow);
                 
 %                 plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
 %                 hold on;
@@ -236,10 +241,10 @@ for angle = 1: 1: 179
 %             end
 
             waypoints = [waypoints; waypointsPerStep];
-            originwaypoints = waypoints;
-            ori
+            originWaypoints = waypoints;
+            originStep = step;
         end
-        if angle == 1
+        if num == 1
             plot3(waypoints(:,1), waypoints(:,2), waypoints(:,3),'.','MarkerSize',10,'Color', color(5,:));
             hold on;
         end
@@ -248,10 +253,11 @@ for angle = 1: 1: 179
         % collision drons. Re-plan the path for the colliding drones, starting
         % form the last point cloud formation 
         if 1%potentialCollide
-
+            step = originStep;
+            waypoints = originWaypoints;
             arrivedDrones = 0;
             collisionAgainDrones = [];
-            colDronesPerTime = [drones(1), drones(2)];
+   
         
             checkPosition = [];
             for x = 1:length(colDronesPerTime)
@@ -298,8 +304,7 @@ for angle = 1: 1: 179
                         colDronesPerTime(i).arrived = true;
                         arrivedDrones = arrivedDrones + 1;
                         fprintf("Origin Step %d, re-plan step %d, drone %d has arrived by replan, moving %.2f while origin %.2f\n", step, replanStep, colDronesPerTime(i).ID, colDronesPerTime(i).distTraveled, norm(colDronesPerTime(i).target-colDronesPerTime(i).startPt));
-                        ans = [angle, step, replanStep];
-                        util.saveCSV(ans, './angleEffect.csv');
+
                         %dronesNum = dronesNum + 1;
                     end
                     %disp(steps);
@@ -353,8 +358,8 @@ for angle = 1: 1: 179
                         arrivedDrones = arrivedDrones + 1;
                     end
                 end
-                plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', [0 0 1]);
-                hold on;
+%                 plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', [0 0 1]);
+%                 hold on;
     
                 if ~removeWhenCollide
                     for i = 1:length(nearByDrones)
@@ -369,7 +374,8 @@ for angle = 1: 1: 179
                 
             end
 
-
+            ans = [num, step, replanStep];
+            util.saveCSV(ans, './numberEffect.csv');
         end
 
         potentialCollide = false;
@@ -382,17 +388,17 @@ for angle = 1: 1: 179
             drones(colDronesPerTime(i).ID) = colDronesPerTime(i);
         end
 
-        for i = 1: (stoptime/0.04)
-            step = step + 1;
-            waypoints = [waypoints; waypointsPerStep];
-        end
+%         for i = 1: (stoptime/0.04)
+%             step = step + 1;
+%             waypoints = [waypoints; waypointsPerStep];
+%         end
         
         %disp(waypoints);
         %util.saveCSV(waypoints);
         totalSteps = totalSteps + size(waypoints,1) / dronesNum;
 
         fprintf('current point cloud takes %d steps, total %d steps\n', size(waypoints,1) / dronesNum, totalSteps);
-        pause(0.01);
+        pause(0.1);
 
 end
 disp(totalSteps);

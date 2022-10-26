@@ -30,7 +30,7 @@ ans = [];
 
 centralPoint = [0,0,0];
 travalRadius = 150;
-for angle = 48: 1: 179
+for angle = 1: 1: 179
     radian = angle * pi/180;
     initialPts = [[centralPoint(1) - travalRadius,centralPoint(2),centralPoint(3)];...
         [centralPoint(1) - cos(radian) * travalRadius,centralPoint(2) - sin(radian) * travalRadius,centralPoint(3)]];
@@ -71,7 +71,7 @@ for angle = 48: 1: 179
             distLeft(i) = norm(drones(i).position - ptCld(i,:));
         end
         
-        while arriveNum ~= dronesNum && angle == 48
+        while arriveNum ~= dronesNum 
             step = step + 1;
             disp(step);
             for i = 1:length(drones)
@@ -166,7 +166,7 @@ for angle = 48: 1: 179
                 
 %                 plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
 %                 hold on;
-                fprintf("the %d th drone is at (%f,%f,%f), with the speed %f, dist left %f, dist to slow %f\n", i, drones(i).position, norm(drones(i).velocity), distLeft(i), newdistToSlow);
+%                 fprintf("the %d th drone is at (%f,%f,%f), with the speed %f, dist left %f, dist to slow %f\n", i, drones(i).position, norm(drones(i).velocity), distLeft(i), newdistToSlow);
                 
 %                 plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',10,'Color', color(mod(k,4) + 4,:));
 %                 hold on;
