@@ -98,8 +98,12 @@ classdef APF
                 md = "D_RE";
             else
                 md = "D_RO";
+
+                disp(dronePositions);
             end
-            fprintf("Drone %d at position [%.2f,%f.2,%.2f],moving %.4f based on %s with speed %.4f, with %.4f left, dist to obstacle %.4f\n", drone.ID, drone.position, l, md, norm(drone.velocity), D_RE, D_RO);
+            fprintf("Drone %d at position [%.2f,%f.2,%.2f], targeting [%.2f,%f.2,%.2f]moving %.4f based on %s with speed %.4f, with %.4f left, dist to obstacle %.4f\n", ...
+                drone.ID, drone.position,drone.target, l, md, norm(drone.velocity), D_RE, D_RO);
+
 
         end
             

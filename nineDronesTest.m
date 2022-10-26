@@ -431,7 +431,7 @@ for k = 1:iterations
         end
         
         %disp(waypoints);
-        util.saveCSV(waypoints);
+        util.saveCSV(waypoints, './pathMatrix.csv');
         totalSteps = totalSteps + size(waypoints,1) / dronesNum;
 
         fprintf('current point cloud takes %d steps, total %d steps\n', size(waypoints,1) / dronesNum, totalSteps);
