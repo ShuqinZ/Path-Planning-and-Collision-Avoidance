@@ -22,6 +22,8 @@ classdef Drone
     waypoints;
     arrived;
     removed;
+
+    targetExchangeCounter;
     
    end
 
@@ -48,6 +50,7 @@ classdef Drone
 
            self.arrived = false;
            self.removed = false;
+           self.targetExchangeCounter = 0;
        end
 
    end

@@ -41,7 +41,7 @@ classdef APF
         %   Calculate the total Velocity-Repulsive force
         function f_Rep = repulsion(self,drone,dronePositions,repDist1,repDist2,etaR1,etaR2)
             f_Rep = [0, 0, 0];           %Initialize the force
-
+            blockingDroneNum = 0;
             for i = 1 : size(dronePositions,1)
                 if isequal(drone.position,dronePositions(i,:))
                     continue;
@@ -52,13 +52,15 @@ classdef APF
                 %Drone is affecting by abstacle's repulsivefield
                 if distToObst <= repDist1
                     eta = etaR2;
+                    blockingDroneNum = blockingDroneNum + 1;
                 elseif distToObst <= repDist2 && distToObst > repDist1
                     eta = etaR1;
+                    blockingDroneNum = blockingDroneNum + 1;
                 else
                     eta = 0;
                 end
                 %   Calculate the repulsive force
-                fRepByObst = eta * (1/distToObst - 1/repDist2) * (1/distToObst^2) * (-1) * self.util.differential(drone.position,dronePositions(i,:));
+                fRepByObst = eta * (1/distToObst - 1/repDist2) * (1/(distToObst^2)) * (-1) * self.util.differential(drone.position,dronePositions(i,:));
                     
                 f_Rep = f_Rep + fRepByObst ;
             end
@@ -68,14 +70,41 @@ classdef APF
 
         %Calculate the next step for current drone
         %   Consider add up kinematicConstrant later
-        function drone = getNextStep(self,drone,dronePositions)
-            force = self.getTotalForce(drone,dronePositions);
+        function [drone,targetExchange] = getNextStep(self,drone,dronePositions)
+
+            targetExchange = 0;
+            
+            if size(dronePositions,1) ~= 0
+                obstPositions = dronePositions(:,1:3);
+            else
+                obstPositions = [];
+            end
+            force = self.getTotalForce(drone,obstPositions);
 
             D_SR = norm(drone.position - drone.startPt);
             D_RE = norm(drone.position - drone.target);
             D_RO = inf;
-            for i = 1:size(dronePositions)
-                D_RO = min([D_RO,norm(drone.position - dronePositions(i,:))]);
+
+            affectingDrone = [];
+
+            closerObst = [];
+
+            %   calculate is there obstacles between drone and target
+            distToTarget = norm(drone.target - drone.position);
+
+            for i = 1:size(dronePositions,1)
+
+                obstToTarget = norm(drone.target - dronePositions(i,1:3));
+
+                distToObst = norm(drone.position - dronePositions(i,1:3));
+
+                if distToObst < 3.5 && dronePositions(i,5)
+                    affectingDrone = [affectingDrone,dronePositions(i,4)];
+                    if obstToTarget < distToTarget
+                        closerObst = [i];
+                    end
+                end
+                D_RO = min([D_RO,distToObst]);
                 %fprintf("Dist to Obstacle [%.2f,%.2f,%.2f] = %.2f\n", dronePositions(i,:),D_RO)
             end
 
@@ -98,12 +127,23 @@ classdef APF
                 md = "D_RE";
             else
                 md = "D_RO";
-
-%                 disp(dronePositions);
             end
-%             fprintf("Drone %d at position [%.2f,%f.2,%.2f], targeting [%.2f,%f.2,%.2f]moving %.4f based on %s with speed %.4f, with %.4f left, dist to obstacle %.4f\n", ...
-%                 drone.ID, drone.position,drone.target, l, md, norm(drone.velocity), D_RE, D_RO);
+            if D_RO <= 2.55 
+                disp(dronePositions);
+                if drone.ID == 82 
+                    disp(force);
+                end
+            end
+            fprintf("Drone %d at position [%.2f,%.2f,%.2f], targeting [%.2f,%.2f,%.2f] moving %.4f based on %s with speed %.4f, with %.4f left, dist to obstacle %.4f\n", ...
+                drone.ID, drone.position,drone.target, l, md, norm(drone.velocity), D_RE, D_RO);
 
+            newDroneToTarget = norm(drone.target - drone.position);
+            
+            if newDroneToTarget > distToTarget && (length(affectingDrone)>=2) && (length(closerObst)>=1)
+                targetExchange = closerObst(1);
+                drone.targetExchangeCounter = drone.targetExchangeCounter+1;
+            end
+            
 
         end
             
