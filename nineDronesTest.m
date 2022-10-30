@@ -314,7 +314,7 @@ for k = 1:iterations
         
             checkPosition = [];
             for x = 1:length(colDronesPerTime)
-                colDronesPerTime(x).position = colDronesPerTime(x).startPt;
+                colDronesPerTime(x).position = waypoints(colDronesPerTime(x).ID,1:3);
                 colDronesPerTime(x).arrived = false;
                 colDronesPerTime(x).removed = false;
                 colDronesPerTime(x).distTraveled = 0;

@@ -128,12 +128,12 @@ classdef APF
             else
                 md = "D_RO";
             end
-            if D_RO <= 2.55 
-                disp(dronePositions);
-                if drone.ID == 82 
-                    disp(force);
-                end
-            end
+%             if D_RO <= 2.55 
+%                 disp(dronePositions);
+%                 if drone.ID == 82 
+%                     disp(force);
+%                 end
+%             end
             fprintf("Drone %d at position [%.2f,%.2f,%.2f], targeting [%.2f,%.2f,%.2f] moving %.4f based on %s with speed %.4f, with %.4f left, dist to obstacle %.4f\n", ...
                 drone.ID, drone.position,drone.target, l, md, norm(drone.velocity), D_RE, D_RO);
 
