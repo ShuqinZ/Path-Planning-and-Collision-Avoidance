@@ -3,6 +3,8 @@ util = Utility();
 % startPtFile = "Point Cloud Squence/pt1379_change.ptcld";
 % targetPtFiles = ["pt1547_change.ptcld", ""];
 
+display = false;
+
 % Configurable parameters
 stoptime = 1;
 removeWhenCollide = true;
@@ -86,6 +88,8 @@ for k = 1:iterations
 
     for j = startPtCld:endPtCld
 
+        timeSpent = [];
+
 
         waypoints = [];
 
@@ -122,7 +126,7 @@ for k = 1:iterations
         
         while arriveNum ~= dronesNum
             step = step + 1;
-            disp(step);
+            %disp(step);
             for i = 1:length(drones)
                 accTime = 0;
                 
@@ -143,7 +147,8 @@ for k = 1:iterations
                     arriveNum = arriveNum + 1;
                     drones(i).velocity = [0,0,0];
                     drones(i).position = drones(i).target;
-                    fprintf("Drone %d arrived, %d has arrived and %d left\n", i, arriveNum, dronesNum-arriveNum);
+                    %fprintf("Drone %d arrived, %d has arrived and %d left\n", i, arriveNum, dronesNum-arriveNum);
+                    timeSpent(i) = step;
                     %disp(step); 
                     continue
                 end
@@ -236,9 +241,12 @@ for k = 1:iterations
 
                         %   marke all colliding drones
                         drones(m).removed = true;
-                        figure(1);
-                        plot3(drones(i).position(1),drones(i).position(2),drones(i).position(3),'r.','MarkerSize',30);
-                        fprintf("Drone %d and %d collided at [%.2f,%.2f,%.2f], step = %d\n",i,m,drones(i).position,step);
+                        if display
+                            figure(1);
+                            plot3(drones(i).position(1),drones(i).position(2),drones(i).position(3),'r.','MarkerSize',30);
+                            hold on;
+                        end
+                        %fprintf("Drone %d and %d collided at [%.2f,%.2f,%.2f], step = %d\n",i,m,drones(i).position,step);
                         %dronesNum = dronesNum - 1;
                         %pause(2);
                         potentialCollide = true;
@@ -291,9 +299,11 @@ for k = 1:iterations
             waypoints = [waypoints; waypointsPerStep];
         end
         if ~potentialCollide
-            figure(1);
-            plot3(waypoints(:,1), waypoints(:,2), waypoints(:,3),'.','MarkerSize',3,'Color', color(mod(k,4) + 4,:));
-            hold on;
+            if display
+                figure(1);
+                plot3(waypoints(:,1), waypoints(:,2), waypoints(:,3),'.','MarkerSize',3,'Color', color(mod(k,4) + 4,:));
+                hold on;
+            end
         end
         originWaypoints = waypoints;
 
@@ -301,8 +311,7 @@ for k = 1:iterations
         % collision drons. Re-plan the path for the colliding drones, starting
         % form the last point cloud formation 
         while potentialCollide
-            disp("Start Re-Plan");
-            pause(0.5);
+            %disp("Start Re-Plan");
 
             replanStep = 0;
             %   save the originWaypoints in case we need to re-replan the path
@@ -326,7 +335,8 @@ for k = 1:iterations
             apf = APF();
             while ~all(arrivedDrones) == 1
                 replanStep = replanStep + 1;
-                disp(replanStep);
+                %disp(replanStep);
+
                 if replanStep <= step
                     waypointsPerStep = waypoints(end-(step - replanStep + 1)*dronesNum + 1:end - (step - replanStep) * dronesNum,:);
                 else
@@ -392,8 +402,8 @@ for k = 1:iterations
 
                     if targetExchange && colDronesPerTime(i).targetExchangeCounter >= 50
 
-                        fprintf("Triggered Target Exchange for drone %d [%.1f,%.1f,%.1f] and %d [%.1f,%.1f,%.1f], ",...
-                            colDronesPerTime(i).ID, colDronesPerTime(i).target, checkPosition(targetExchange,4), waypointsPerStep(checkPosition(targetExchange,4),10:12));
+                        %fprintf("Triggered Target Exchange for drone %d [%.1f,%.1f,%.1f] and %d [%.1f,%.1f,%.1f], ",...
+                           % colDronesPerTime(i).ID, colDronesPerTime(i).target, checkPosition(targetExchange,4), waypointsPerStep(checkPosition(targetExchange,4),10:12));
                         if j >= 4
                             pause(0.1);
                         end
@@ -431,8 +441,9 @@ for k = 1:iterations
                     if norm(colDronesPerTime(i).position(:)-colDronesPerTime(i).target(:)) <= 0.01
                         colDronesPerTime(i).arrived = true;
                         arrivedDrones(i) = 1;
-                        fprintf("Origin Step %d, re-plan step %d, drone %d has arrived by replan, moving %.2f while origin %.2f\n", step, replanStep, colDronesPerTime(i).ID, colDronesPerTime(i).distTraveled, norm(colDronesPerTime(i).target-colDronesPerTime(i).startPt));
+                        %fprintf("Origin Step %d, re-plan step %d, drone %d has arrived by replan, moving %.2f while origin %.2f\n", step, replanStep, colDronesPerTime(i).ID, colDronesPerTime(i).distTraveled, norm(colDronesPerTime(i).target-colDronesPerTime(i).startPt));
                         %dronesNum = dronesNum + 1;
+                        timeSpent(colDronesPerTime(i).ID) = replanStep;
                     end
                     %disp(steps);
                 end
@@ -458,11 +469,13 @@ for k = 1:iterations
                         if norm(colDronesPerTime(i).position - waypoints(drones(m).ID + dronesNum * (replanStep - 1),1:3))<= 0.1 && colDronesPerTime(i).ID ~= m 
                             colAgainDNum = colAgainDNum + 1;
                             drones(m).removed = true;
-                            figure(1);
-                            plot3(colDronesPerTime(i).position(1),colDronesPerTime(i).position(2),colDronesPerTime(i).position(3),'r.','MarkerSize',30);
-                            hold on;
-                            fprintf("Drone %d and %d collided again at [%f,%f,%f] with distance %f \n", ...
-                                colDronesPerTime(i).ID, m, waypoints(drones(m).ID + dronesNum * (replanStep - 1),1:3),norm(colDronesPerTime(i).position - waypoints(drones(m).ID + dronesNum * (replanStep - 1),1:3)))
+                            if display
+                                figure(1);
+                                plot3(colDronesPerTime(i).position(1),colDronesPerTime(i).position(2),colDronesPerTime(i).position(3),'r.','MarkerSize',30);
+                                hold on;
+                            end
+                            %fprintf("Drone %d and %d collided again at [%f,%f,%f] with distance %f \n", ...
+                                %colDronesPerTime(i).ID, m, waypoints(drones(m).ID + dronesNum * (replanStep - 1),1:3),norm(colDronesPerTime(i).position - waypoints(drones(m).ID + dronesNum * (replanStep - 1),1:3)))
                             pause(1);
 
                             addOrNot = true;
@@ -498,9 +511,11 @@ for k = 1:iterations
                         arrivedDrones(i) = 1;
                     end
                 end
-                figure(1);
-                plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',3,'Color', [0 0 1]);
-                hold on;
+                if display
+                    figure(1);
+                    plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',3,'Color', [0 0 1]);
+                    hold on;
+                end
 
                 if potentialCollide
                     break
@@ -512,33 +527,121 @@ for k = 1:iterations
         end
 
         %   mark the target point
-        figure(1);
-        plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',20,'Color', color(j,:));
-        hold on;
 
-        figure;
-        plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',20,'Color', color(j,:));
-        hold on;
+        if display
+            figure(1);
+            plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',20,'Color', color(j,:));
+            hold on;
+    
+            figure;
+            plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',20,'Color', color(j,:));
+            hold on;
+        end
 
         for i = 1:length(colDronesPerTime)
             drones(colDronesPerTime(i).ID) = colDronesPerTime(i);
+        end
+
+        speeds = [[]];
+        maxSpeeds = [];
+        minSpeeds = [];
+        avgSpeeds = [];
+
+        distToTarget = [];
+        distTravel = [];
+        
+        % Calculate the distance a drone travels
+        for i = 1:dronesNum
+            distToTarget(i) = abs(norm(drones(i).target - drones(i).startPt));
+            distTravel(i) = drones(i).distTraveled;
+        end
+
+        % calculate the maximum, minimum and average speed
+        for i = 1:dronesNum:size(waypoints)
+            for ID = 1:dronesNum
+                speeds(ID,floor((i-1)/90)+1) = norm(waypoints(i+ID - 1,4:6));
+            end
+        end
+        
+        %   load max, min and avg speed
+        for i = 1:dronesNum
+            maxSpeeds(i) = max(speeds(i,:));
+            minSpeeds(i) = min(speeds(i,:));
+            avgSpeeds(i) = mean(speeds(i,:),"all");
         end
 
         for i = 1: (stoptime/0.04)
             step = step + 1;
             waypoints = [waypoints; waypointsPerStep];
         end
+
+        figure('Name',"Max, Min & Average Speed")
+
+        hMinSpeed = histogram(minSpeeds);
+        hMinSpeed.FaceColor = 'auto';
+        hMinSpeed.FaceAlpha = 0.5;
+        hold on;
+
+        hAvgSpeed = histogram(avgSpeeds);
+        hAvgSpeed.FaceColor = 'auto';
+        hAvgSpeed.FaceAlpha = 0.5;
+        hold on;
         
+        hMaxSpeed = histogram(maxSpeeds);
+        hMaxSpeed.FaceColor = 'auto';
+        hMaxSpeed.FaceAlpha = 0.5;
+        hold on;
+
+        for i = 1:dronesNum
+            if distTravel(i) < distToTarget(i) && distTravel(i) >= distToTarget(i) - 0.01
+                distTravel(i) = distToTarget(i);
+            end
+        end
+
+        ylabel('Done Number','FontSize',16);
+        xlabel('Speed of Drone','FontSize',16);
+
+
+        figure('Name',"Distance from starting point to target and traveled distance")
+        hToTarget = histogram(distToTarget);
+        hToTarget.FaceColor = [0,0,1];
+        hToTarget.FaceAlpha = 0.5;
+        hold on;
+
+        hTraveled = histogram(distTravel);
+        hTraveled.FaceColor = [1,0,0];
+        hTraveled.FaceAlpha = 0.5;
+        hold on;
+
+        xlabel('Done Number','FontSize',16);
+        ylabel('Distance','FontSize',16);
+
+        figure('Name',"Time spent to reach target")
+        hTime = histogram(timeSpent);
+        hToTarget.FaceColor = [0,0,1];
+        hold on;
+
+        xlabel('Done Number','FontSize',16);
+        ylabel('Steps Took','FontSize',16);
+        
+        fprintf('The first Drone arrive at step %d, last Drone at step %d, takes %.2f sec to render\n', ...
+            min(timeSpent),max(timeSpent), (max(timeSpent) - min(timeSpent))*timeunit);
+
+        %speeds = [minSpeeds.', maxSpeeds.',avgSpeeds.',speeds];
+        writematrix([timeSpent.',distTravel.',distToTarget.'],'process.xlsx','Sheet',j);
+
         %disp(waypoints);
-        util.saveCSV(waypoints, './pathMatrix.csv');
+        %util.saveCSV(waypoints, './pathMatrix_test.csv');
         totalSteps = totalSteps + size(waypoints,1) / dronesNum;
 
         fprintf('current point cloud takes %d steps, total %d steps\n', size(waypoints,1) / dronesNum, totalSteps);
+        fprintf('Of All drones, Max speed = %.2f, Min Speed = %.2f\n', max(maxSpeeds), min(minSpeeds));
+        fprintf('Max distance traveled = %.2f, Max distance to target = %.2f\n', max(distTravel), max(distToTarget));
         pause(0.01);
     end
 
 end
-disp(totalSteps);
+%disp(totalSteps);
 % figure;
 % h = histogram(collisions, length(dronesNum));
 % xlabel('FLSs involved in the Collision','FontSize',16);

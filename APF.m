@@ -111,15 +111,20 @@ classdef APF
             l = min([D_SR, D_RE, D_RO/2]) * drone.timeUnit;
             if l < 0.5 * drone.accMax * drone.timeUnit^2
                 l = 0.5 * drone.accMax * drone.timeUnit^2;
-            elseif l > drone.vMax * drone.timeUnit
+            elseif l > drone.vMax * drone.timeUnit 
                 l = drone.vMax * drone.timeUnit;
             end
+          
             distanceMove = l * force;
             
             drone.position = drone.position + distanceMove;
             drone.distTraveled = drone.distTraveled + norm(distanceMove);
             lastV = drone.velocity;
             drone.velocity = ((2 * norm(distanceMove) / drone.timeUnit) - norm(drone.velocity)) * force;
+            if norm(drone.velocity) >= 3
+                drone.velocity = drone.velocity * 3/norm(drone.velocity);
+            end
+
             drone.acceleration = (drone.velocity - lastV)/drone.timeUnit;
             if l == D_SR * drone.timeUnit
                 md = "D_SR";
@@ -134,8 +139,8 @@ classdef APF
 %                     disp(force);
 %                 end
 %             end
-            fprintf("Drone %d at position [%.2f,%.2f,%.2f], targeting [%.2f,%.2f,%.2f] moving %.4f based on %s with speed %.4f, with %.4f left, dist to obstacle %.4f\n", ...
-                drone.ID, drone.position,drone.target, l, md, norm(drone.velocity), D_RE, D_RO);
+            %fprintf("Drone %d at position [%.2f,%.2f,%.2f], targeting [%.2f,%.2f,%.2f] moving %.4f based on %s with speed %.4f, with %.4f left, dist to obstacle %.4f\n", ...
+             %   drone.ID, drone.position,drone.target, l, md, norm(drone.velocity), D_RE, D_RO);
 
             newDroneToTarget = norm(drone.target - drone.position);
             
