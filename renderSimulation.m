@@ -3,7 +3,7 @@ util = Utility();
 % startPtFile = "Point Cloud Squence/pt1379_change.ptcld";
 % targetPtFiles = ["pt1547_change.ptcld", ""];
 
-display = false;
+display = 0;
 
 % Configurable parameters
 stoptime = 1;
@@ -11,7 +11,7 @@ removeWhenCollide = true;
 iterations = 1;
 timeunit = 1/25;
 
-ptClds = [];
+% ptClds = [];
 direction = [];
 distLeft = [];
 waypoints = [];
@@ -27,7 +27,7 @@ sizeOfIllumCell = 5;
 dispCellSize = 0.1;
 speedLimit = 1;
 repulsiveRange = 3.5;
-nearByIlluminationCell = floor(repulsiveRange/(dispCellSize * sizeOfIllumCell)) + 0.5;
+nearByIlluminationCell = ceil(repulsiveRange/(dispCellSize * sizeOfIllumCell));
 
 totalSteps = 0;
 % initialPts = util.loadPtCld(startPtFile);
@@ -51,18 +51,24 @@ totalSteps = 0;
 % % circle
 % ptClds(:,:,4) = [[25,40,25];[34.65,36.5,25];[39.75,27.6,25];[38,17.5,25];[30.15,10.9,25];[19.85,10.9,25];[12,17.5,25];[10.25,27.6,25];[15.35,36.5,25]];
 
-initialPts = readmatrix("Point Cloud Squence/90DronesGround.csv");
-ptClds(:,:,1) = readmatrix("Point Cloud Squence/90DronesRise.csv");
-ptClds(:,:,2) = readmatrix("Point Cloud Squence/butterfly.csv");
-ptClds(:,:,3) = readmatrix("Point Cloud Squence/cat.csv");
-ptClds(:,:,4) = readmatrix("Point Cloud Squence/teapot.csv");
 
-ptCldNums = size(ptClds,3);
+% fileNames = ["pt1617.1197.ptcld", "pt1620.997.ptcld", "pt1625.760.ptcld", "pt1608.758.ptcld", "pt1609.454.ptcld"];
+% fileNames = ["Point Cloud Squence/pt1617.1197.ptcld", "Point Cloud Squence/pt1620.997.ptcld", "Point Cloud Squence/pt1625.760.ptcld", "Point Cloud Squence/pt1608.758.ptcld", "Point Cloud Squence/pt1609.454.ptcld"];
+fileNames = ["Point Cloud Squence/pt1609.79.ptcld", "Point Cloud Squence/pt1625.49.ptcld"];
 
+% initialPts = readmatrix("Point Cloud Squence/90DronesGround.csv");
+ptCld = convertCellListToMat(fileNames(1));
+% ptClds(:,:,1) = readmatrix("Point Cloud Squence/90DronesRise.csv");
+% ptClds(:,:,2) = readmatrix("Point Cloud Squence/butterfly.csv");
+% ptClds(:,:,3) = readmatrix("Point Cloud Squence/cat.csv");
+% ptClds(:,:,4) = readmatrix("Point Cloud Squence/teapot.csv");
 
-for i = 1:length(initialPts)
-    drones(i) = Drone(i,initialPts(i,:),[0,0,0],[0,0,0],[0,0,0]);
-    waypointsPerStep = [drones(i).position, drones(i).velocity, drones(i).acceleration,ptClds(i,:,1)];
+ptCldNums = length(fileNames);
+
+waypointsPerStep = [];
+for i = 1:size(ptCld, 1)
+    drones(i) = Drone(i,ptCld(i,:),[0,0,0],[0,0,0],[0,0,0]);
+%     waypointsPerStep = [waypointsPerStep; drones(i).position, drones(i).velocity, drones(i).acceleration,ptCld];
 end
 
 
@@ -72,34 +78,19 @@ dronesNum = length(drones);
 % Start Simulation
 for k = 1:iterations
 
-
-    startPtCld = 2;
-    endPtCld = ptCldNums;
-    % the first iteration needs to have lifting process
-    if k == 1
-        startPtCld = 1;
-    end
-
-    % the last iteration needs to have landing process
-    if k == iterations
-        endPtCld = ptCldNums + 2;
-    end
-
-
-    for j = startPtCld:endPtCld
+    for j = 2:ptCldNums
 
         timeSpent = [];
 
 
         waypoints = [];
 
-        if j == ptCldNums + 1
-            ptCld = ptClds(:,:,1);
-        elseif j == ptCldNums + 2
-            ptCld = initialPts;
-        else
-            ptCld = ptClds(:,:,j);
-        end
+        lastPtCld = ptCld;
+
+
+        ptCld = convertCellListToMat(fileNames(j));
+
+        ptCld = [ptCld;lastPtCld(size(ptCld,1) + 1 : size(lastPtCld,1), :)];
         
 
         step = 0;
@@ -110,29 +101,38 @@ for k = 1:iterations
         colDronesPerTime = [];
         potentialCollide = false;
 
-        for i = 1:length(drones)
+        for i = 1:size(ptCld, 1)
             drones(i).startPt = drones(i).position;
             drones(i).target = ptCld(i,:);
             drones(i).arrived = false;
             drones(i).velocity = [0,0,0];
             drones(i).distTraveled = 0;
         end
+        for i = size(ptCld, 1) : length(drones)
+            drones(i).startPt = drones(i).position;
+            drones(i).arrived = true;
+            drones(i).goDark = true;
+            drones(i).velocity = [0,0,0];
+            drones(i).distTraveled = 0;
+            arriveNum = arriveNum + 1;
+        end
 
         % set the moving direction of each drones
-        for i = 1:size(ptCld)
+        for i = 1:size(ptCld, 1)
             direction(i,:) = util.differential(drones(i).position, ptCld(i,:));
             distLeft(i) = norm(drones(i).position - ptCld(i,:));
         end
         
         while arriveNum ~= dronesNum
             step = step + 1;
-            %disp(step);
+            disp(step);
             for i = 1:length(drones)
                 accTime = 0;
                 
                 %   if the drone has arrived, skip
                 if drones(i).arrived
-                    continue
+                    waypointsPerStep(i,:) = [drones(i).position, drones(i).velocity, drones(i).acceleration,drones(i).target];
+                    continue;
                 end
                 
 %                 %   if the drone has already been removed, ignore it
@@ -238,6 +238,11 @@ for k = 1:iterations
                 end
 
                 for m = (i + 1):length(drones)
+                    
+                    
+                    
+                    
+                    
                     if norm(drones(i).position - drones(m).position)<= 0.1 && ~drones(m).removed
                         collisionDNum = collisionDNum + 1;
 
@@ -435,7 +440,7 @@ for k = 1:iterations
                             colDronesPerTime(colDrone).target = newDroneTarget;
                         end
                         %   mark that we needs to re-replan the path 
-%                         potentialCollide = true;
+                        potentialCollide = true;
                     end
 
                     % re-write waypoints
@@ -497,7 +502,6 @@ for k = 1:iterations
                                 arrivedDrones(colDrone) = 0;
                             end
 
-                            needsReplan = true;
 
                             if removeWhenCollide
                                collisionAgainDrones = [collisionAgainDrones, drones(m)];
@@ -561,9 +565,9 @@ for k = 1:iterations
         end
 
         % calculate the maximum, minimum and average speed
-        for i = 1:dronesNum:size(waypoints)
+        for i = 1:dronesNum:size(waypoints,1)-dronesNum + 1
             for ID = 1:dronesNum
-                speeds(ID,floor((i-1)/90)+1) = norm(waypoints(i+ID - 1,4:6));
+                speeds(ID,floor((i-1)/dronesNum)+1) = norm(waypoints(i+ID - 1,4:6));
             end
         end
         
@@ -631,9 +635,9 @@ for k = 1:iterations
         fprintf('The first Drone arrive at step %d, last Drone at step %d, takes %.2f sec to render\n', ...
             min(timeSpent),max(timeSpent), (max(timeSpent) - min(timeSpent))*timeunit);
 
-        %speeds = [minSpeeds.', maxSpeeds.',avgSpeeds.',speeds];
-%          writematrix([timeSpent.',distTravel.',distToTarget.',avgSpeeds.',minSpeeds.', maxSpeeds.'],'process_2.xlsx','Sheet',j);
-%         writematrix(speeds,'speed.xlsx','Sheet',j)
+        speeds = [minSpeeds.', maxSpeeds.',avgSpeeds.',speeds];
+        writematrix([timeSpent.',distTravel.',distToTarget.',avgSpeeds.',minSpeeds.', maxSpeeds.'],'process_final.xlsx','Sheet',j);
+        writematrix(speeds,'speed.xlsx','Sheet',j)
         %disp(waypoints);
         %util.saveCSV(waypoints, './pathMatrix_test.csv');
         totalSteps = totalSteps + size(waypoints,1) / dronesNum;

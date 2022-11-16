@@ -8,8 +8,8 @@ classdef Drone
     yawMax;
     climbAngleMax;
     subAngleMax;
-    vMax = 3;
-    accMax = 3;
+    vMax = 5;
+    accMax = 5;
 
     distTraveled;
 
@@ -22,6 +22,7 @@ classdef Drone
     waypoints;
     arrived;
     removed;
+    goDark;
 
     targetExchangeCounter;
     
@@ -51,6 +52,7 @@ classdef Drone
            self.arrived = false;
            self.removed = false;
            self.targetExchangeCounter = 0;
+           self.goDark = false;
        end
 
    end

@@ -6,8 +6,8 @@ classdef APF
         
         %   Feild data sets
         attBound = 5;
-        repDist1 = 2.5;
-        repDist2 = 3.5;
+        repDist1 = 1;
+        repDist2 = 1.5;
 
         %   Coefficients
         epsilon = 5;
@@ -138,9 +138,6 @@ classdef APF
   
 %             if D_RO <= 2.55 
 %                 disp(dronePositions);
-%                 if drone.ID == 82 
-%                     disp(force);
-%                 end
 %             end
             fprintf("Drone %d at position [%.2f,%.2f,%.2f], targeting [%.2f,%.2f,%.2f] moving %.4f based on %s with speed %.4f, with %.4f left, dist to obstacle %.4f\n", ...
                drone.ID, drone.position,drone.target, l, md, norm(drone.velocity), D_RE, D_RO);
