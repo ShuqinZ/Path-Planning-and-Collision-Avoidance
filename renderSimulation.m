@@ -67,7 +67,7 @@ ptCldNums = length(fileNames);
 
 waypointsPerStep = [];
 for i = 1:size(ptCld, 1)
-    drones(i) = Drone(i,ptCld(i,:),[0,0,0],[0,0,0],[0,0,0]);
+    drones(i) = Drone(i,ptCld(i,:),ptCld(i,:),[0,0,0],[0,0,0]);
 %     waypointsPerStep = [waypointsPerStep; drones(i).position, drones(i).velocity, drones(i).acceleration,ptCld];
 end
 
@@ -78,9 +78,11 @@ dronesNum = length(drones);
 % Start Simulation
 for k = 1:iterations
 
-    for j = 2:ptCldNums
-
-        timeSpent = [];
+    for j = 1:ptCldNums
+        if k == 1 && j == 1
+            continue;
+        end
+        timeSpent = zeros(1, dronesNum);
 
 
         waypoints = [];
@@ -90,7 +92,6 @@ for k = 1:iterations
 
         ptCld = convertCellListToMat(fileNames(j));
 
-        ptCld = [ptCld;lastPtCld(size(ptCld,1) + 1 : size(lastPtCld,1), :)];
         
 
         step = 0;
@@ -102,13 +103,17 @@ for k = 1:iterations
         potentialCollide = false;
 
         for i = 1:size(ptCld, 1)
+
+            drones(i).position = drones(i).target;
             drones(i).startPt = drones(i).position;
             drones(i).target = ptCld(i,:);
             drones(i).arrived = false;
             drones(i).velocity = [0,0,0];
             drones(i).distTraveled = 0;
         end
-        for i = size(ptCld, 1) : length(drones)
+        for i = size(ptCld, 1) + 1 : length(drones)
+
+            drones(i).position = drones(i).target;
             drones(i).startPt = drones(i).position;
             drones(i).arrived = true;
             drones(i).goDark = true;
@@ -116,7 +121,8 @@ for k = 1:iterations
             drones(i).distTraveled = 0;
             arriveNum = arriveNum + 1;
         end
-
+        
+        ptCld = [ptCld;lastPtCld(size(ptCld,1) + 1 : size(lastPtCld,1), :)];
         % set the moving direction of each drones
         for i = 1:size(ptCld, 1)
             direction(i,:) = util.differential(drones(i).position, ptCld(i,:));
@@ -142,6 +148,7 @@ for k = 1:iterations
 
                 % if the drone is already arrived, or just arrived, skip
 %                 if all(abs(drones(i).position - drones(i).target)<=[0.002,0.002,0.002])
+ 
                 if all(abs(drones(i).position - drones(i).target)<=[0.002,0.002,0.002])
                     drones(i).arrived = true;
                     arriveNum = arriveNum + 1;
@@ -551,9 +558,9 @@ for k = 1:iterations
         end
 
         speeds = [[]];
-        maxSpeeds = [];
-        minSpeeds = [];
-        avgSpeeds = [];
+        maxSpeeds = zeros(dronesNum,1);
+        minSpeeds = zeros(dronesNum,1);
+        avgSpeeds = zeros(dronesNum,1);
 
         distToTarget = [];
         distTravel = [];
@@ -573,6 +580,9 @@ for k = 1:iterations
         
         %   load max, min and avg speed
         for i = 1:dronesNum
+            if ~timeSpent(i)
+                continue;
+            end
             maxSpeeds(i) = max(speeds(i,1:timeSpent(i)));
             minSpeeds(i) = min(speeds(i,1:timeSpent(i)));
             avgSpeeds(i) = mean(speeds(i,1:timeSpent(i)),"all");
@@ -635,8 +645,8 @@ for k = 1:iterations
         fprintf('The first Drone arrive at step %d, last Drone at step %d, takes %.2f sec to render\n', ...
             min(timeSpent),max(timeSpent), (max(timeSpent) - min(timeSpent))*timeunit);
 
-        speeds = [minSpeeds.', maxSpeeds.',avgSpeeds.',speeds];
-        writematrix([timeSpent.',distTravel.',distToTarget.',avgSpeeds.',minSpeeds.', maxSpeeds.'],'process_final.xlsx','Sheet',j);
+        speeds = [minSpeeds, maxSpeeds,avgSpeeds,speeds];
+        writematrix([timeSpent.',distTravel.',distToTarget.',avgSpeeds,minSpeeds, maxSpeeds],'process_final.xlsx','Sheet',j);
         writematrix(speeds,'speed.xlsx','Sheet',j)
         %disp(waypoints);
         %util.saveCSV(waypoints, './pathMatrix_test.csv');
@@ -644,7 +654,7 @@ for k = 1:iterations
 
         fprintf('current point cloud takes %d steps, total %d steps\n', size(waypoints,1) / dronesNum, totalSteps);
         fprintf('Of All drones, Max speed = %.2f, Min Speed = %.2f\n', max(maxSpeeds), min(minSpeeds));
-        fprintf('Max distance traveled = %.2f, Max distance to target = %.2f\n', max(distTravel), max(distToTarget));
+        fprintf('Min distance traveled = %.2f, Max distance to target = %.2f\n', min(distTravel), max(distToTarget));
         pause(0.01);
     end
 
