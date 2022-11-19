@@ -6,8 +6,8 @@ classdef APF
         
         %   Feild data sets
         attBound = 5;
-        repDist1 = 1;
-        repDist2 = 1.5;
+        repDist1 = 2;
+        repDist2 = 2.5;
 
         %   Coefficients
         epsilon = 5;
@@ -32,9 +32,12 @@ classdef APF
             %   To prevent attraction force grown too big when it's far from target
             %   Set an upper bound to the arraction force
             dist = min(dist, attBound);
-
-            %   Return a the attraction force vector
-            f_att = epsilon * (drone.target - drone.position) * dist/norm(drone.target - drone.position);
+            if norm(drone.target - drone.position)
+                %   Return a the attraction force vector
+                f_att = epsilon * (drone.target - drone.position) * dist/norm(drone.target - drone.position);
+            else
+                f_att = [0,0,0];
+            end
         end
 
 
@@ -144,7 +147,7 @@ classdef APF
 
             newDroneToTarget = norm(drone.target - drone.position);
             
-            if newDroneToTarget > distToTarget && (length(affectingDrone)>=2) && (length(closerObst)>=1)
+            if newDroneToTarget > distToTarget && (length(affectingDrone)>=1) && (length(closerObst)>=1)
                 targetExchange = closerObst(1);
                 drone.targetExchangeCounter = drone.targetExchangeCounter+1;
             end
@@ -157,14 +160,12 @@ classdef APF
             f_att = self.attraction(drone,self.attBound,self.epsilon);
             f_rep = self.repulsion(drone,dronePositions,self.repDist1,self.repDist2,self.etaR1,self.etaR2);
            
-            f_total = f_att + f_rep;
-
-
-            %fprintf('total force [%f,%f,%f] \n', f_total);
-            %f_total = self.util.getUnitVec(f_total);
-            %f_attMax = self.epsilon * norm(drone.target - drone.startPt);
-            %f_total = self.util.getNormalized(f_attMax, f_total);
-            f_total = f_total/norm(f_total);
+            if all(f_att == 0)&& all(f_rep == 0)
+                f_total = [0,0,0];
+            else
+                f_total = f_att + f_rep;
+                f_total = f_total/norm(f_total);
+            end
 
         end
 

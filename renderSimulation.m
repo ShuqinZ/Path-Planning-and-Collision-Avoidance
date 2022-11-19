@@ -30,39 +30,19 @@ repulsiveRange = 3.5;
 nearByIlluminationCell = ceil(repulsiveRange/(dispCellSize * sizeOfIllumCell));
 
 totalSteps = 0;
-% initialPts = util.loadPtCld(startPtFile);
-% 
-% for i = 1:size(targetPtFiles)
-%     targets(i) = util.loadPtCld("Point Cloud Squence/" + targetPtFiles(i));
-% end
 
-% 3x3 matrix on the ground
-% initialPts = [[0,0,0];[0,5,0];[0,10,0];[5,0,0];[5,5,0];[5,10,0];[10,0,0];[10,5,0];[10,10,0]];
-% 
-% % lifting up to the 3x3 matrix in the air
-% ptClds(:,:,1) = [[0,0,25];[0,5,25];[0,10,25];[5,0,25];[5,5,25];[5,10,25];[10,0,25];[10,5,25];[10,10,25]]; 
-% 
-% % a line
-% ptClds(:,:,2) = [[25,25,25];[27.5,25,25];[30,25,25];[32.5,25,25];[35,25,25];[37.5,25,25];[40,25,25];[42.5,25,25];[45,25,25]];
-% 
-% % a cube with one FLS sticking out
-% ptClds(:,:,3) = [[45,15,15];[25,35,15];[45,35,15];[25,15,35];[25,35,35];[45,15,35];[45,35,35];[35,25,45];[25,15,15]];
-% 
-% % circle
-% ptClds(:,:,4) = [[25,40,25];[34.65,36.5,25];[39.75,27.6,25];[38,17.5,25];[30.15,10.9,25];[19.85,10.9,25];[12,17.5,25];[10.25,27.6,25];[15.35,36.5,25]];
-
-
-% fileNames = ["pt1617.1197.ptcld", "pt1620.997.ptcld", "pt1625.760.ptcld", "pt1608.758.ptcld", "pt1609.454.ptcld"];
-% fileNames = ["Point Cloud Squence/pt1617.1197.ptcld", "Point Cloud Squence/pt1620.997.ptcld", "Point Cloud Squence/pt1625.760.ptcld", "Point Cloud Squence/pt1608.758.ptcld", "Point Cloud Squence/pt1609.454.ptcld"];
-fileNames = ["Point Cloud Squence/pt1609.79.ptcld", "Point Cloud Squence/pt1625.49.ptcld"];
-
+% fileNames = ["Point Cloud Squence/pt1609.79.ptcld", "Point Cloud Squence/pt1625.49.ptcld"];
 % initialPts = readmatrix("Point Cloud Squence/90DronesGround.csv");
-ptCld = convertCellListToMat(fileNames(1));
+% ptCld = convertCellListToMat(fileNames(1));
+
 % ptClds(:,:,1) = readmatrix("Point Cloud Squence/90DronesRise.csv");
 % ptClds(:,:,2) = readmatrix("Point Cloud Squence/butterfly.csv");
 % ptClds(:,:,3) = readmatrix("Point Cloud Squence/cat.csv");
 % ptClds(:,:,4) = readmatrix("Point Cloud Squence/teapot.csv");
 
+fileNames = ["Point Cloud Squence/butterfly.csv","Point Cloud Squence/cat.csv","Point Cloud Squence/teapot.csv"];
+
+ptCld = readmatrix(fileNames(1));
 ptCldNums = length(fileNames);
 
 waypointsPerStep = [];
@@ -90,7 +70,8 @@ for k = 1:iterations
         lastPtCld = ptCld;
 
 
-        ptCld = convertCellListToMat(fileNames(j));
+%         ptCld = convertCellListToMat(fileNames(j));
+        ptCld = readmatrix(fileNames(j));
 
         
 
@@ -137,7 +118,7 @@ for k = 1:iterations
                 
                 %   if the drone has arrived, skip
                 if drones(i).arrived
-                    waypointsPerStep(i,:) = [drones(i).position, drones(i).velocity, drones(i).acceleration,drones(i).target];
+                    waypointsPerStep(i,:) = [drones(i).position, drones(i).velocity, drones(i).acceleration,drones(i).target, drones(i).goDark];
                     continue;
                 end
                 
@@ -149,7 +130,7 @@ for k = 1:iterations
                 % if the drone is already arrived, or just arrived, skip
 %                 if all(abs(drones(i).position - drones(i).target)<=[0.002,0.002,0.002])
  
-                if all(abs(drones(i).position - drones(i).target)<=[0.002,0.002,0.002])
+                if abs(norm(drones(i).position - drones(i).target))<=0.1
                     drones(i).arrived = true;
                     arriveNum = arriveNum + 1;
                     drones(i).velocity = [0,0,0];
@@ -222,7 +203,7 @@ for k = 1:iterations
                 
 
 %                 fprintf("Moving %.4f at step %d with speed %.2f\n", distMoved, step, norm(newV));
-                waypointsPerStep(i,:) = [drones(i).position, drones(i).velocity, drones(i).acceleration,drones(i).target];
+                waypointsPerStep(i,:) = [drones(i).position, drones(i).velocity, drones(i).acceleration,drones(i).target, drones(i).goDark];
 
 %                 v = norm(drones(i).velocity);
 %                 tToSlow = v /(drones(i).accMax);
@@ -261,6 +242,23 @@ for k = 1:iterations
                             hold on;
                         end
                         fprintf("Drone %d and %d collided at [%.2f,%.2f,%.2f], step = %d\n",i,m,drones(i).position,step);
+                        if drones(m).goDark
+                            drones(m).goDark = false;
+                            drones(i).goDark = true;
+                            drones(m).arrived = false;
+                            
+                            add = true;
+                            for coldrone = 1 : length(colDronesPerTime)
+                                if colDronesPerTime(coldrone).ID == i
+                                    add = false;
+                                    break;
+                                end
+                            end
+                            if add
+                                colDronesPerTime = [colDronesPerTime, drones(i)];
+                                colDronesPerTime(end).target = colDronesPerTime(end).startPt;
+                            end
+                        end
                         %dronesNum = dronesNum - 1;
                         %pause(2);
                         potentialCollide = true;
@@ -360,7 +358,7 @@ for k = 1:iterations
                 % needs to update the replanning drone's info based on the
                 % origin path
                 for i = 1:length(colDronesPerTime)
-                    waypointsPerStep(colDronesPerTime(i).ID,:) = [colDronesPerTime(i).position, colDronesPerTime(i).velocity, colDronesPerTime(i).acceleration,colDronesPerTime(i).target];
+                    waypointsPerStep(colDronesPerTime(i).ID,:) = [colDronesPerTime(i).position, colDronesPerTime(i).velocity, colDronesPerTime(i).acceleration,colDronesPerTime(i).target, colDronesPerTime(i).goDark];
                 end
 
 
@@ -417,15 +415,18 @@ for k = 1:iterations
                     
                     [colDronesPerTime(i),targetExchange] = apf.getNextStep(colDronesPerTime(i),checkPosition);
 
-                    if targetExchange && colDronesPerTime(i).targetExchangeCounter >= 50
+                    if targetExchange && colDronesPerTime(i).targetExchangeCounter >= 1
 
                         fprintf("Triggered Target Exchange for drone %d [%.1f,%.1f,%.1f] and %d [%.1f,%.1f,%.1f], ",...
                            colDronesPerTime(i).ID, colDronesPerTime(i).target, checkPosition(targetExchange,4), waypointsPerStep(checkPosition(targetExchange,4),10:12));
-
-                        tmp = waypointsPerStep(checkPosition(targetExchange,4),10:12);
-                        newDroneTarget = colDronesPerTime(i).target;
-                        colDronesPerTime(i).target = tmp;
-
+                        if waypointsPerStep(checkPosition(targetExchange,4),13)
+                            colDronesPerTime(i).target = colDronesPerTime(i).startPt;
+                            colDronesPerTime(i).goDark = true;
+                        else
+                            tmp = waypointsPerStep(checkPosition(targetExchange,4),10:12);
+                            newDroneTarget = colDronesPerTime(i).target;
+                            colDronesPerTime(i).target = tmp;
+                        end
                         colDronesPerTime(i).targetExchangeCounter = 0;
 
                         addOrNot = 0;
@@ -451,7 +452,7 @@ for k = 1:iterations
                     end
 
                     % re-write waypoints
-                    waypointsPerStep(colDronesPerTime(i).ID,:) = [colDronesPerTime(i).position, colDronesPerTime(i).velocity, colDronesPerTime(i).acceleration, colDronesPerTime(i).target];
+                    waypointsPerStep(colDronesPerTime(i).ID,:) = [colDronesPerTime(i).position, colDronesPerTime(i).velocity, colDronesPerTime(i).acceleration, colDronesPerTime(i).target, colDronesPerTime(i).goDark];
 
                               
                     if norm(colDronesPerTime(i).position(:)-colDronesPerTime(i).target(:)) <= 0.01
