@@ -40,9 +40,9 @@ totalSteps = 0;
 % ptClds(:,:,3) = readmatrix("Point Cloud Squence/cat.csv");
 % ptClds(:,:,4) = readmatrix("Point Cloud Squence/teapot.csv");
 
-fileNames = ["Point Cloud Squence/butterfly.csv","Point Cloud Squence/cat.csv","Point Cloud Squence/teapot.csv"];
+fileNames = ["./Point Cloud Squence/pt1605_change.ptcld","./Point Cloud Squence/pt1709_change.ptcld","./Point Cloud Squence/pt1811_change.ptcld","./Point Cloud Squence/pt1547_change.ptcld", "./Point Cloud Squence/pt1379_change.ptcld"];
 
-ptCld = readmatrix(fileNames(1));
+ptCld = convertCellListToMat(fileNames(1));
 ptCldNums = length(fileNames);
 
 waypointsPerStep = [];
@@ -70,8 +70,8 @@ for k = 1:iterations
         lastPtCld = ptCld;
 
 
-%         ptCld = convertCellListToMat(fileNames(j));
-        ptCld = readmatrix(fileNames(j));
+        ptCld = convertCellListToMat(fileNames(j));
+%         ptCld = readmatrix(fileNames(j));
 
         
 
@@ -647,8 +647,8 @@ for k = 1:iterations
             min(timeSpent),max(timeSpent), (max(timeSpent) - min(timeSpent))*timeunit);
 
         speeds = [minSpeeds, maxSpeeds,avgSpeeds,speeds];
-        writematrix([timeSpent.',distTravel.',distToTarget.',avgSpeeds,minSpeeds, maxSpeeds],'process_final.xlsx','Sheet',j);
-        writematrix(speeds,'speed.xlsx','Sheet',j)
+        writematrix([timeSpent.',distTravel.',distToTarget.',avgSpeeds,minSpeeds, maxSpeeds],'process_499.xlsx','Sheet',j);
+        writematrix(speeds,'speed_499w.xlsx','Sheet',j)
         %disp(waypoints);
         %util.saveCSV(waypoints, './pathMatrix_test.csv');
         totalSteps = totalSteps + size(waypoints,1) / dronesNum;
