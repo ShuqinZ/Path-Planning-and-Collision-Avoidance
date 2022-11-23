@@ -6,7 +6,7 @@ classdef APF
         
         %   Feild data sets
         attBound = 5;
-        repDist1 = 2;
+        repDist1 = 0.2;
         repDist2 = 2.5;
 
         %   Coefficients
@@ -20,8 +20,10 @@ classdef APF
     
     methods
 
-        function self = APF()
+        function self = APF(illuminationCellSize)
             self.util = Utility();
+            self.repDist1 = illuminationCellSize;
+            self.repDist2 = self.repDist1 * 5/4;
         end
 
 
