@@ -1,7 +1,7 @@
 classdef Drone
    properties  
     ID;
-    timeUnit = 1/25;
+    timeUnit = 1/10;
     %   Velovity Restrict (use data frome Dji)
     yawPerStep;
     pitchPerStep;

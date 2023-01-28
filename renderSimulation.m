@@ -1,4 +1,4 @@
-function renderSimulation(ratio)
+function renderSimulation(ratio, outputFileName)
     util = Utility();
     % startPtFile = "Point Cloud Squence/pt1379_change.ptcld";
     % targetPtFiles = ["pt1547_change.ptcld", ""];
@@ -9,7 +9,7 @@ function renderSimulation(ratio)
     stoptime = 1;
     removeWhenCollide = true;
     iterations = 1;
-    timeunit = 1/25;
+    timeunit = 1/10;
     
     % ptClds = [];
     direction = [];
@@ -24,7 +24,7 @@ function renderSimulation(ratio)
     displayCell = [];
     illuminationCell = [];
     sizeOfIllumCell = ratio;
-    dispCellSize = 0.2;
+    dispCellSize = 0.3;
     speedLimit = 1;
     repulsiveRange = 3.5;
     nearByIlluminationCell = ceil(repulsiveRange/(dispCellSize * sizeOfIllumCell));
@@ -41,7 +41,8 @@ function renderSimulation(ratio)
     % ptClds(:,:,4) = readmatrix("Point Cloud Squence/teapot.csv");
     
 %     fileNames = ["Point Cloud Squence/butterfly.csv","Point Cloud Squence/cat.csv","Point Cloud Squence/teapot.csv"];
-    fileNames = ["pt1605_change.ptcld","pt1709_change.ptcld","pt1811_change.ptcld","pt1547_change.ptcld", "pt1379_change.ptcld"];   
+%     fileNames = ["pt1605_change.ptcld","pt1709_change.ptcld","pt1811_change.ptcld","pt1547_change.ptcld", "pt1379_change.ptcld"];   
+    fileNames = ["Test1Ptcld.ptcld", "Test2Ptcld.ptcld", "Test1Ptcld.ptcld"];
     ptCld = convertCellListToMat("./Point Cloud Squence/" + fileNames(1));
 %     ptCld = readmatrix(fileNames(1));
     ptCldNums = length(fileNames);
@@ -131,7 +132,7 @@ function renderSimulation(ratio)
                     % if the drone is already arrived, or just arrived, skip
     %                 if all(abs(drones(i).position - drones(i).target)<=[0.002,0.002,0.002])
      
-                    if abs(norm(drones(i).position - drones(i).target))<= sizeOfIllumCell * dispCellSize
+                    if abs(norm(drones(i).position - drones(i).target))<= sizeOfIllumCell * dispCellSize/2 && norm(drones(i).velocity) <= 0.5
                         drones(i).arrived = true;
                         arriveNum = arriveNum + 1;
                         drones(i).velocity = [0,0,0];
@@ -214,9 +215,9 @@ function renderSimulation(ratio)
     %                 plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',3,'Color', color(mod(k,4) + 4,:));
     %                 hold on;
                     %fprintf("the %d th drone is at (%f,%f,%f), with the speed %f, dist left %f, dist to slow %f\n", i, drones(i).position, norm(drones(i).velocity), distLeft(i), newdistToSlow);
-    %                 figure(1);
-    %                 plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',3,'Color', color(5,:));
-    %                 hold on;
+%                     figure(1);
+%                     plot3(waypointsPerStep(:,1), waypointsPerStep(:,2), waypointsPerStep(:,3),'.','MarkerSize',6,'Color', color(3,:));
+%                     hold on;
                 end
                 
                 % collision detection
@@ -649,7 +650,7 @@ function renderSimulation(ratio)
                 min(timeSpent),max(timeSpent), (max(timeSpent) - min(timeSpent))*timeunit);
     
             speeds = [minSpeeds, maxSpeeds,avgSpeeds,speeds];
-            writematrix([timeSpent.',distTravel.',distToTarget.',avgSpeeds,minSpeeds, maxSpeeds],'process_final_500_' + string(ratio) + '.xlsx','Sheet',j);
+            writematrix([timeSpent.',distTravel.',distToTarget.',avgSpeeds,minSpeeds, maxSpeeds], outputFileName + '_FLSs_.xlsx','Sheet',j);
     %         writematrix(speeds,'speed_final_90.xlsx','Sheet',j)
             %disp(waypoints);
             %util.saveCSV(waypoints, './pathMatrix_test.csv');

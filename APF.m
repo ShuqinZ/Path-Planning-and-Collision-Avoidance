@@ -6,8 +6,8 @@ classdef APF
         
         %   Feild data sets
         attBound = 5;
-        repDist1 = 0.2;
-        repDist2 = 2.5;
+        repDist1 = 2.5;
+        repDist2 = 3.5;
 
         %   Coefficients
         epsilon = 5;
@@ -22,8 +22,8 @@ classdef APF
 
         function self = APF(illuminationCellSize)
             self.util = Utility();
-            self.repDist1 = illuminationCellSize;
-            self.repDist2 = self.repDist1 * 5/4;
+%             self.repDist1 = illuminationCellSize;
+%             self.repDist2 = self.repDist1 * 5/4;
         end
 
 
@@ -161,7 +161,9 @@ classdef APF
         function f_total = getTotalForce(self,drone,dronePositions)
             f_att = self.attraction(drone,self.attBound,self.epsilon);
             f_rep = self.repulsion(drone,dronePositions,self.repDist1,self.repDist2,self.etaR1,self.etaR2);
-           
+            if ~all(f_rep == 0)
+                pause(0.1);
+            end
             if all(f_att == 0)&& all(f_rep == 0)
                 f_total = [0,0,0];
             else
